@@ -40,6 +40,52 @@
   background: #ffffff;
 }
 
+/**
+ * Left showcase panel.
+ *
+ * Two stacked clip paths: the panel itself is filled with the company's brand colour,
+ * and the artwork layer is inset from the angled edge — what shows between them is the
+ * coloured band along the diagonal. Both shapes must keep the same vertices, or the
+ * band stops being parallel.
+ *
+ * The split is driven by ORIENTATION, not by width. A 12.9" tablet is 1024px wide while
+ * standing upright, so a width breakpoint would split it into columns in portrait; by
+ * orientation, every tablet stacks when held upright and splits when turned sideways.
+ */
+.showcase-panel {
+  width: 100%;
+  height: 36dvh;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 26px), 50% 100%, 0 calc(100% - 26px));
+}
+
+.showcase-media {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 44px),
+    50% calc(100% - 18px),
+    0 calc(100% - 44px)
+  );
+}
+
+@media (orientation: landscape) {
+  .showcase-panel {
+    width: 46%;
+    height: 100%;
+    clip-path: polygon(0 0, 86% 0, 100% 50%, 86% 100%, 0 100%);
+  }
+
+  .showcase-media {
+    clip-path: polygon(
+      0 0,
+      calc(86% - 22px) 0,
+      calc(100% - 22px) 50%,
+      calc(86% - 22px) 100%,
+      0 100%
+    );
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-ping {
     animation: none;

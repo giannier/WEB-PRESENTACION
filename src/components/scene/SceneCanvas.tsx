@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 import { SceneLoader } from '@/components/scene/Loader';
+import { CompanyShowcase } from '@/components/showcase/CompanyShowcase';
 import { CompanyHud } from '@/components/ui/CompanyHud';
 import { CompanyWheel } from '@/components/wheel/CompanyWheel';
 import { QualityProvider, useQuality } from '@/context/QualityContext';
@@ -136,31 +137,50 @@ function Experience() {
   const dpr = useMemo<[number, number]>(() => [quality.dpr[0], quality.dpr[1]], [quality.dpr]);
 
   return (
-    <div className="fixed inset-0">
-      <Canvas
-        dpr={dpr}
-        // `flat` disables tone mapping: brand colours must reach the screen unaltered.
-        flat
-        frameloop="always"
-        gl={{ antialias: quality.antialias, powerPreference: 'high-performance' }}
-        camera={{
-          fov: CAMERA_FOV,
-          near: CAMERA_NEAR,
-          far: CAMERA_FAR,
-          position: [0, 0, RADIUS + CAMERA_BASE_DISTANCE],
-        }}
-      >
-        <Scene />
-      </Canvas>
+    // Split stage: reference artwork on the left, the wheel on the right. Stacks on
+    // portrait screens. The canvas sizes itself to its panel, and `<CameraRig>` reads
+    // that size, so the framing adapts to the panel rather than to the window.
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-white landscape:flex-row">
+      <CompanyShowcase />
 
-      {/*
-        Full-screen input capture. It sits above the canvas and owns every wheel,
-        pointer and touch gesture; taps are raycast manually by <CompanyWheel>.
-        `touch-none` stops the browser from scrolling the page mid-swipe.
-      */}
-      <div ref={captureRef} aria-hidden="true" className="absolute inset-0 z-10 touch-none" />
+      <div className="relative min-h-0 flex-1">
+        {/*
+          On portrait the HUD sits under the wheel, so the canvas stops short of it: the
+          camera frames the logo inside the space that is actually free, instead of
+          centring it behind the buttons. In landscape the HUD floats over a full-height
+          panel, except on a short screen (a phone on its side) where it would still
+          collide.
+        */}
+        {/* The underscores are required: Tailwind turns them into the spaces the media
+            query needs, and without them the whole rule is silently dropped. */}
+        <div className="absolute inset-x-0 bottom-40 top-0 landscape:bottom-0 [@media(orientation:landscape)_and_(max-height:820px)]:bottom-32">
+          <Canvas
+            dpr={dpr}
+            // `flat` disables tone mapping: brand colours must reach the screen unaltered.
+            flat
+            frameloop="always"
+            gl={{ antialias: quality.antialias, powerPreference: 'high-performance' }}
+            camera={{
+              fov: CAMERA_FOV,
+              near: CAMERA_NEAR,
+              far: CAMERA_FAR,
+              position: [0, 0, RADIUS + CAMERA_BASE_DISTANCE],
+            }}
+          >
+            <Scene />
+          </Canvas>
+        </div>
 
-      <CompanyHud />
+        {/*
+          Input capture over the wheel panel only. It sits above the canvas and owns
+          every wheel, pointer and touch gesture; taps are raycast manually by
+          <CompanyWheel>. Keeping it off the left panel leaves the contact links there
+          clickable. `touch-none` stops the browser scrolling mid-swipe.
+        */}
+        <div ref={captureRef} aria-hidden="true" className="absolute inset-0 z-10 touch-none" />
+
+        <CompanyHud />
+      </div>
     </div>
   );
 }

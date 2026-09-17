@@ -3,7 +3,7 @@
 import type { MouseEvent } from 'react';
 
 import { hudButtonClassName } from '@/components/ui/hudButton';
-import { GlobeIcon } from '@/components/ui/icons';
+import { ArrowRightIcon, GlobeIcon } from '@/components/ui/icons';
 import { useWheel } from '@/context/WheelContext';
 import type { Company } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
@@ -48,6 +48,7 @@ export function WebsiteButton({ company, index }: WebsiteButtonProps) {
     >
       <GlobeIcon className="h-5 w-5 shrink-0" />
       <span>Ingresar a la web</span>
+      <ArrowRightIcon className="hidden h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1 sm:block" />
     </a>
   );
 }

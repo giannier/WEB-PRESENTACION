@@ -9,7 +9,8 @@ import { FormIcon, QrIcon } from '@/components/ui/icons';
 import { QrDialog } from '@/components/ui/QrDialog';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
 import { useWheel } from '@/context/WheelContext';
-import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
+import { COMPANIES, COMPANY_COUNT, getLogoPath } from '@/data/companies';
+import { companyColor } from '@/data/companyColors';
 import {
   HINT_FADE_DURATION,
   HUD_DIM_DURATION,
@@ -22,11 +23,12 @@ import {
 type OpenDialog = 'qr' | 'form' | null;
 
 /**
- * Fixed HTML chrome around the canvas: brand, active company, and the three actions.
+ * Chrome over the wheel panel: the active company, the position counter and the three
+ * actions.
  *
- *   left   "Ingresar a la web"  -> company website in a new tab
- *   centre "QR de información"  -> QR code to the company's social links page
- *   right  "Formulario"         -> networking contact form
+ *   "Ingresar a la web"  -> company website in a new tab
+ *   "QR de información"  -> QR code to the company's social links page
+ *   "Formulario"         -> networking contact form
  *
  * Re-renders only when `activeIndex`, `hasInteracted` or `isTransitioning` change —
  * never per frame. The wrapper is `pointer-events-none` so drags pass straight through
@@ -98,48 +100,59 @@ export function CompanyHud() {
 
   if (company === undefined) return null;
 
+  const color = companyColor(company.slug);
+
   return (
     <>
-      <div
-        ref={rootRef}
-        className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between"
-      >
-        <header className="px-5 pt-6 sm:px-10 sm:pt-8">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.42em] text-neutral-900">
-            Grupo Corporativo
-          </p>
-          <p className="mt-1.5 text-[0.7rem] tracking-wide text-neutral-500">
-            Diecinueve empresas, un solo ecosistema
-          </p>
-        </header>
+      <div ref={rootRef} className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end">
+        {/* Oversized mark of the focused company, barely there. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          key={company.slug}
+          src={getLogoPath(company.slug)}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-[12%] -top-[8%] w-[52%] max-w-lg object-contain opacity-[0.045]"
+        />
 
-        <footer className="px-4 pb-5 sm:px-10 sm:pb-8">
-          <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
+        {/* On a very short screen (a phone on its side) the chrome tightens up so it
+            never grows into the space the logo needs. */}
+        <footer className="px-4 pb-6 sm:px-8 sm:pb-8 [@media(max-height:450px)]:pb-3">
+          <div className="mb-5 flex flex-col items-center text-center [@media(max-height:450px)]:mb-2">
             <p
               ref={hintRef}
               aria-hidden="true"
-              className="mb-3 text-[0.62rem] uppercase tracking-[0.3em] text-neutral-400"
+              className="mb-3 text-[0.6rem] uppercase tracking-[0.3em] text-neutral-400 [@media(max-height:450px)]:hidden"
             >
               Desliza para explorar
             </p>
+
             <p
               ref={nameRef}
               aria-live="polite"
-              className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl"
+              className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[1.75rem] [@media(max-height:450px)]:text-lg"
             >
               {company.name}
             </p>
-            <p className="mt-1.5 text-[0.65rem] uppercase tracking-[0.3em] text-neutral-400">
-              {String(activeIndex + 1).padStart(2, '0')} / {COMPANY_COUNT}
-            </p>
+
+            <div className="mt-2.5 flex items-center gap-3 [@media(max-height:450px)]:mt-1">
+              <span className="h-[2px] w-10 rounded-full" style={{ backgroundColor: color }} />
+              <span className="text-[0.65rem] tracking-[0.3em] text-neutral-400">
+                {String(activeIndex + 1).padStart(2, '0')} / {COMPANY_COUNT}
+              </span>
+              <span className="h-[2px] w-10 rounded-full" style={{ backgroundColor: color }} />
+            </div>
           </div>
 
-          <nav aria-label={`Acciones de ${company.name}`} className="grid grid-cols-3 items-end gap-2">
-            <div className="pointer-events-auto justify-self-start">
+          <nav
+            aria-label={`Acciones de ${company.name}`}
+            className="flex flex-wrap items-center justify-center gap-2 sm:gap-3"
+          >
+            <div className="pointer-events-auto">
               <WebsiteButton company={company} index={activeIndex} />
             </div>
 
-            <div className="pointer-events-auto justify-self-center">
+            <div className="pointer-events-auto">
               <button
                 type="button"
                 onClick={() => setOpenDialog('qr')}
@@ -151,7 +164,7 @@ export function CompanyHud() {
               </button>
             </div>
 
-            <div className="pointer-events-auto justify-self-end">
+            <div className="pointer-events-auto">
               <button
                 type="button"
                 onClick={() => setOpenDialog('form')}

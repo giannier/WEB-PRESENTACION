@@ -48,6 +48,31 @@ export function FormIcon(props: IconProps) {
   );
 }
 
+export function PhoneIcon(props: IconProps) {
+  return (
+    <BaseIcon strokeWidth={2} {...props}>
+      <path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5C10.8 19.9 4.1 13.2 3.5 5.1A1.5 1.5 0 0 1 5 3.5h1.5z" />
+    </BaseIcon>
+  );
+}
+
+export function MailIcon(props: IconProps) {
+  return (
+    <BaseIcon strokeWidth={2} {...props}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="M3.5 7l8.5 6 8.5-6" />
+    </BaseIcon>
+  );
+}
+
+export function ArrowRightIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 12h14M13 7l5 5-5 5" />
+    </BaseIcon>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

@@ -1,9 +1,15 @@
 # Corporate Ecosystem — 3D Company Wheel
 
-An interactive presentation site for a group of nineteen businesses. Each company logo
-orbits an invisible upright cylinder on a pure white stage. The wheel spins right to
-left with real inertia and snaps to the nearest logo. Three actions sit under the
-wheel for the selected company:
+An interactive presentation site for a group of nineteen businesses, built to be shown
+on tablets held either way.
+
+The stage is split: reference artwork, headline and contacts for the focused company on
+one side, and the wheel on the other. Each company logo orbits an invisible upright
+cylinder on a white ground, spinning right to left with real inertia and snapping to the
+nearest logo. The diagonal between the two panels, the highlighted words and the primary
+button all take the brand colour of whichever company is in focus.
+
+Three actions sit under the wheel for the selected company:
 
 | Button | What it does |
 | --- | --- |
@@ -41,7 +47,9 @@ src/
     redes/[slug]/page.tsx     static social links page per company (QR target)
     api/contacts/route.ts     HTTP adapter for the contact form
   components/
-    scene/SceneCanvas.tsx     client root: providers, <Canvas>, camera rig, HUD
+    scene/SceneCanvas.tsx     client root: providers, split stage, <Canvas>, camera rig
+    showcase/CompanyShowcase.tsx  left panel: artwork, headline, contacts
+    showcase/ShowcaseMedia.tsx    image / video / branded fallback
     wheel/CompanyWheel.tsx    the cylinder and the single frame loop
     wheel/CompanyCard.tsx     one unlit logo plane
     ui/CompanyHud.tsx         brand, active company, the three actions
@@ -54,6 +62,7 @@ src/
     infrastructure/           Google Sheets adapter, local file adapter, composition root
   data/
     companies.ts              the nineteen companies
+    companyProfiles.ts        showcase copy, contacts and artwork per company
     companySocials.ts         official social profiles per company
     companyColors.ts          generated brand colours
   context/WheelContext.tsx    mutable wheel state + confirmation pulse
@@ -94,6 +103,37 @@ Everything lives in `src/lib/constants.ts`. The ones you are most likely to touc
 
 Drag sensitivity is solved from the live camera framing, so the logo under the finger
 follows the finger on any screen size.
+
+---
+
+## The showcase panel
+
+Artwork is looked up by convention: drop `public/media/<slug>.jpg` and that company
+lights up, with no code change. A missing file falls back to a gradient built from the
+company's brand colour, so nothing ever renders broken. For a video, declare it in
+`companyProfiles.ts`:
+
+```ts
+media: { type: 'video', src: '/media/agrosumak.mp4', poster: '/media/agrosumak.jpg' },
+```
+
+Headlines are split into `lead` / `highlight` / `tail` so the middle part can be painted
+in the brand colour without HTML inside a string. The seeded copy, phones and emails come
+from each company's own website.
+
+### Layout and orientation
+
+The split is driven by `@media (orientation: landscape)`, never by a width breakpoint: a
+12.9" tablet is 1024px wide while standing upright, so a width rule would split it into
+columns in portrait. Turned sideways every tablet gets two columns; upright it stacks.
+
+Tablets in landscape are shorter than a desktop display, so below 820px of height the
+canvas stops above the buttons instead of filling the panel. The camera then frames the
+logo inside the space that is actually free.
+
+> Arbitrary media variants in Tailwind need underscores where the query needs spaces:
+> `[@media(orientation:landscape)_and_(max-height:820px)]:bottom-32`. Without them the
+> rule is silently dropped — check the built CSS, not the source, when one goes missing.
 
 ---
 

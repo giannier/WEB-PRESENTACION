@@ -56,8 +56,11 @@ export const CAMERA_MAX_DISTANCE = 16;
  */
 export const CAMERA_WIDTH_MARGIN = 1.39;
 /**
- * Governs wide (landscape) screens. The front logo takes about half the viewport height
- * and both neighbours are fully in frame on a 16:9 display.
+ * Governs wide (landscape) screens. The front logo takes about half the panel height.
+ *
+ * Tablets turned sideways are shorter than a desktop display, so instead of shrinking
+ * the logo everywhere, the canvas itself stops above the buttons on short landscape
+ * screens (see `SceneCanvas`). The logo then keeps its presence on every device.
  */
 export const CAMERA_HEIGHT_MARGIN = 2.0;
 
@@ -195,6 +198,10 @@ export const PERF_DPR_FLOOR = 0.75;
 
 export const HUD_SWAP_DURATION = 0.32;
 export const HUD_SWAP_OFFSET_Y = 14;
+
+/** Showcase copy slides in from the side the wheel travels towards. */
+export const SHOWCASE_SWAP_DURATION = 0.45;
+export const SHOWCASE_SWAP_OFFSET_X = -28;
 export const HINT_FADE_DURATION = 0.45;
 
 /**
