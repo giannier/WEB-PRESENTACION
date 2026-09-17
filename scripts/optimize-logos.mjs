@@ -16,7 +16,11 @@ import { fileURLToPath } from 'node:url';
 
 import sharp from 'sharp';
 
-const MAX_EDGE = 512;
+/**
+ * Logos are the hero of the wheel and fill up to half the viewport height, so 512px
+ * upscaled visibly on 1080p screens and 3x phone displays. 1024 stays sharp.
+ */
+const MAX_EDGE = 1024;
 const PNG_OPTIONS = { quality: 80, compressionLevel: 9 };
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
