@@ -7,10 +7,10 @@ function LoaderBody() {
   return (
     <div className="flex flex-col items-center gap-4" role="status" aria-live="polite">
       <span className="relative flex h-8 w-8 items-center justify-center">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/20" />
-        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white/80" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-neutral-900/15" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-neutral-900/80" />
       </span>
-      <p className="text-[0.7rem] font-medium uppercase tracking-[0.35em] text-white/60">
+      <p className="text-[0.7rem] font-medium uppercase tracking-[0.35em] text-neutral-500">
         Cargando ecosistema
       </p>
     </div>

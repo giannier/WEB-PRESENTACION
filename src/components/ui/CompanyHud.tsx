@@ -1,10 +1,13 @@
 'use client';
 
 import gsap from 'gsap';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { BlockedPopupNotice } from '@/components/ui/BlockedPopupNotice';
-import { EnterButton } from '@/components/ui/EnterButton';
+import { ContactFormDialog } from '@/components/ui/ContactFormDialog';
+import { hudButtonClassName } from '@/components/ui/hudButton';
+import { FormIcon, QrIcon } from '@/components/ui/icons';
+import { QrDialog } from '@/components/ui/QrDialog';
+import { WebsiteButton } from '@/components/ui/WebsiteButton';
 import { useWheel } from '@/context/WheelContext';
 import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import {
@@ -16,21 +19,29 @@ import {
   HUD_SWAP_OFFSET_Y,
 } from '@/lib/constants';
 
+type OpenDialog = 'qr' | 'form' | null;
+
 /**
- * Fixed HTML chrome around the canvas.
+ * Fixed HTML chrome around the canvas: brand, active company, and the three actions.
+ *
+ *   left   "Ingresar a la web"  -> company website in a new tab
+ *   centre "QR de información"  -> QR code to the company's social links page
+ *   right  "Formulario"         -> networking contact form
  *
  * Re-renders only when `activeIndex`, `hasInteracted` or `isTransitioning` change —
- * never per frame. The wrapper is `pointer-events-none` so drags pass straight
- * through to the capture layer underneath; only the button opts back in.
+ * never per frame. The wrapper is `pointer-events-none` so drags pass straight through
+ * to the capture layer underneath; only the buttons opt back in.
  */
 export function CompanyHud() {
   const { activeIndex, hasInteracted, isTransitioning } = useWheel();
+  const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLParagraphElement>(null);
-  const hintRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLParagraphElement>(null);
 
   const company = COMPANIES[activeIndex];
+  const closeDialog = useCallback(() => setOpenDialog(null), []);
 
   // Swap animation on the active company name.
   useEffect(() => {
@@ -40,13 +51,7 @@ export function CompanyHud() {
     const tween = gsap.fromTo(
       element,
       { opacity: 0, y: HUD_SWAP_OFFSET_Y },
-      {
-        opacity: 1,
-        y: 0,
-        duration: HUD_SWAP_DURATION,
-        ease: 'power2.out',
-        overwrite: true,
-      },
+      { opacity: 1, y: 0, duration: HUD_SWAP_DURATION, ease: 'power2.out', overwrite: true },
     );
 
     // Strict Mode double-invokes this effect; killing the previous tween keeps a
@@ -73,10 +78,8 @@ export function CompanyHud() {
     };
   }, [hasInteracted]);
 
-  // Step the chrome back while the confirmation plays, then bring it straight back.
-  // Both directions are driven from the same effect on purpose: an earlier version
-  // only ever faded out, which left the HUD invisible for good once the transition
-  // ended.
+  // Step the chrome back while the pulse plays, then bring it straight back. Both
+  // directions run from one effect so the HUD can never be stranded half-faded.
   useEffect(() => {
     const element = rootRef.current;
     if (element === null) return;
@@ -97,52 +100,74 @@ export function CompanyHud() {
 
   return (
     <>
-      <BlockedPopupNotice />
-
       <div
         ref={rootRef}
         className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between"
       >
-        {/* Brand */}
-      <header className="px-6 pt-7 sm:px-10 sm:pt-9">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.42em] text-white/70">
-          Grupo Corporativo
-        </p>
-        <p className="mt-1.5 text-[0.7rem] font-light tracking-wide text-white/35">
-          Diecinueve empresas, un solo ecosistema
-        </p>
-      </header>
+        <header className="px-5 pt-6 sm:px-10 sm:pt-8">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.42em] text-neutral-900">
+            Grupo Corporativo
+          </p>
+          <p className="mt-1.5 text-[0.7rem] tracking-wide text-neutral-500">
+            Diecinueve empresas, un solo ecosistema
+          </p>
+        </header>
 
-      {/* Active company + call to action */}
-      <footer className="px-6 pb-9 sm:px-10 sm:pb-12">
-        <div className="mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
-          <div className="min-h-[3.25rem]">
+        <footer className="px-4 pb-5 sm:px-10 sm:pb-8">
+          <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
+            <p
+              ref={hintRef}
+              aria-hidden="true"
+              className="mb-3 text-[0.62rem] uppercase tracking-[0.3em] text-neutral-400"
+            >
+              Desliza para explorar
+            </p>
             <p
               ref={nameRef}
               aria-live="polite"
-              className="text-2xl font-light tracking-tight text-white sm:text-3xl"
+              className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl"
             >
               {company.name}
             </p>
-            <p className="mt-1.5 text-[0.65rem] uppercase tracking-[0.3em] text-white/35">
+            <p className="mt-1.5 text-[0.65rem] uppercase tracking-[0.3em] text-neutral-400">
               {String(activeIndex + 1).padStart(2, '0')} / {COMPANY_COUNT}
             </p>
           </div>
 
-          <div className="pointer-events-auto">
-            <EnterButton />
-          </div>
+          <nav aria-label={`Acciones de ${company.name}`} className="grid grid-cols-3 items-end gap-2">
+            <div className="pointer-events-auto justify-self-start">
+              <WebsiteButton company={company} index={activeIndex} />
+            </div>
 
-          <div
-            ref={hintRef}
-            aria-hidden="true"
-            className="text-[0.65rem] uppercase tracking-[0.3em] text-white/30"
-          >
-            Desliza para explorar
-          </div>
-          </div>
+            <div className="pointer-events-auto justify-self-center">
+              <button
+                type="button"
+                onClick={() => setOpenDialog('qr')}
+                aria-haspopup="dialog"
+                className={hudButtonClassName('secondary')}
+              >
+                <QrIcon className="h-5 w-5 shrink-0" />
+                <span>QR de información</span>
+              </button>
+            </div>
+
+            <div className="pointer-events-auto justify-self-end">
+              <button
+                type="button"
+                onClick={() => setOpenDialog('form')}
+                aria-haspopup="dialog"
+                className={hudButtonClassName('secondary')}
+              >
+                <FormIcon className="h-5 w-5 shrink-0" />
+                <span>Formulario</span>
+              </button>
+            </div>
+          </nav>
         </footer>
       </div>
+
+      <QrDialog company={company} open={openDialog === 'qr'} onClose={closeDialog} />
+      <ContactFormDialog company={company} open={openDialog === 'form'} onClose={closeDialog} />
     </>
   );
 }

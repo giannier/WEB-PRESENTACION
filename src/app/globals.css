@@ -9,15 +9,15 @@
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
     min-height: 100dvh;
-    background-color: var(--color-ink-900);
-    color: #ffffff;
+    background-color: #ffffff;
+    color: var(--color-ink-900);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -32,18 +32,12 @@
   }
 }
 
-/**
- * Minimalist backdrop: two soft radial pools behind the canvas.
- * No particles, no texture — the glass and the logos carry the composition.
- */
+/** Pure white stage behind the canvas. The logos carry the composition. */
 .backdrop-stage {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background:
-    radial-gradient(60rem 60rem at 50% 42%, rgba(70, 96, 150, 0.28), transparent 62%),
-    radial-gradient(42rem 42rem at 50% 108%, rgba(120, 88, 180, 0.16), transparent 60%),
-    linear-gradient(180deg, var(--color-ink-800) 0%, var(--color-ink-900) 100%);
+  background: #ffffff;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,25 +1,18 @@
 'use client';
 
 import { AdaptiveDpr, AdaptiveEvents, PerformanceMonitor } from '@react-three/drei';
-import { Canvas, useThree, type RootState } from '@react-three/fiber';
-import { Bloom, EffectComposer } from '@react-three/postprocessing';
-import { Component, Suspense, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
-import { Lighting } from '@/components/scene/Lighting';
 import { SceneLoader } from '@/components/scene/Loader';
-import { StudioEnvironment } from '@/components/scene/StudioEnvironment';
 import { CompanyHud } from '@/components/ui/CompanyHud';
-import { FlashOverlay } from '@/components/ui/FlashOverlay';
 import { CompanyWheel } from '@/components/wheel/CompanyWheel';
 import { QualityProvider, useQuality } from '@/context/QualityContext';
-import { WheelProvider, useWheel, type BloomHandle } from '@/context/WheelContext';
+import { WheelProvider, useWheel } from '@/context/WheelContext';
 import { preloadCompanyTextures } from '@/hooks/useCompanyTextures';
 import { useWheelInput } from '@/hooks/useWheelPhysics';
 import {
-  BLOOM_LUMINANCE_SMOOTHING,
-  BLOOM_LUMINANCE_THRESHOLD,
-  BLOOM_MIPMAP_BLUR,
   CAMERA_BASE_DISTANCE,
   CAMERA_FAR,
   CAMERA_FOV,
@@ -28,64 +21,32 @@ import {
   CAMERA_MIN_DISTANCE,
   CAMERA_NEAR,
   CAMERA_WIDTH_MARGIN,
-  CARD_HEIGHT,
-  CARD_WIDTH,
-  HERO_FILL_RATIO,
-  HERO_MIN_SCALE,
-  LOGO_MAX_HEIGHT,
-  LOGO_MAX_WIDTH,
+  DRAG_TRACKING_GAIN,
+  LOGO_SIZE,
   PERF_DPR_FLOOR,
   RADIUS,
-  SELECT_SCALE,
-  SELECT_Z_OFFSET,
-  TRANSMISSION_RESOLUTION_SCALE,
+  SCENE_BACKGROUND,
 } from '@/lib/constants';
 import { clamp } from '@/lib/math';
 
-// Start fetching the logo atlas the moment this client chunk evaluates, which is
+// Start fetching the logo textures the moment this client chunk evaluates, which is
 // well before the WebGL context is ready.
 preloadCompanyTextures();
-
-/* ------------------------------------------------------------------ *
- * Environment resilience
- * ------------------------------------------------------------------ */
-
-/**
- * The environment is baked locally, so there is no network dependency left to fail.
- * The boundary stays as a last-resort guard: if the cube-map bake throws on an
- * unusual driver, the scene must still render — only the reflections are lost, and
- * the discrete lights carry the look on their own.
- */
-class EnvironmentBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  public override state = { failed: false };
-
-  public static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  public override render() {
-    if (this.state.failed) return null;
-    return this.props.children;
-  }
-}
 
 /* ------------------------------------------------------------------ *
  * Responsive framing
  * ------------------------------------------------------------------ */
 
 /**
- * Solves the camera distance from the live viewport so the focused card is always
- * fully framed — a 9:16 phone needs far more pull-back than a 16:9 desktop.
- *
- * Also solves the hero scale for the selection transition. `SELECT_SCALE` is the
- * desktop target; on a narrow viewport it is clamped down so the logo never leaves
- * the frame at the peak of the money shot.
+ * Solves the camera distance from the live viewport so the front logo is always framed:
+ * a 9:16 phone needs far more pull-back than a 16:9 desktop. Also solves the drag
+ * sensitivity from the same framing, so the logo under the finger follows the finger.
  */
 function CameraRig() {
   const camera = useThree((state) => state.camera);
   const width = useThree((state) => state.size.width);
   const height = useThree((state) => state.size.height);
-  const { heroScaleRef } = useWheel();
+  const { dragSensitivityRef } = useWheel();
 
   useEffect(() => {
     if (!(camera instanceof THREE.PerspectiveCamera)) return;
@@ -93,9 +54,10 @@ function CameraRig() {
 
     const aspect = width / height;
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    const halfLogo = LOGO_SIZE * 0.5;
 
-    const byHeight = (CARD_HEIGHT * 0.5 * CAMERA_HEIGHT_MARGIN) / tan;
-    const byWidth = (CARD_WIDTH * 0.5 * CAMERA_WIDTH_MARGIN) / (tan * aspect);
+    const byHeight = (halfLogo * CAMERA_HEIGHT_MARGIN) / tan;
+    const byWidth = (halfLogo * CAMERA_WIDTH_MARGIN) / (tan * aspect);
     const distance = clamp(
       Math.max(byWidth, byHeight),
       CAMERA_MIN_DISTANCE,
@@ -106,20 +68,12 @@ function CameraRig() {
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 
-    const heroDistance = Math.max(distance - SELECT_Z_OFFSET, 0.5);
-    const visibleHeight = 2 * heroDistance * tan;
-    const visibleWidth = visibleHeight * aspect;
-
-    heroScaleRef.current = clamp(
-      Math.min(
-        SELECT_SCALE,
-        (visibleWidth * HERO_FILL_RATIO) / LOGO_MAX_WIDTH,
-        (visibleHeight * HERO_FILL_RATIO) / LOGO_MAX_HEIGHT,
-      ),
-      HERO_MIN_SCALE,
-      SELECT_SCALE,
-    );
-  }, [camera, width, height, heroScaleRef]);
+    // Finger tracking. The front logo sits `distance` from the camera, so this is how
+    // many CSS pixels one world unit spans on its plane; a small rotation then moves
+    // that logo by `RADIUS * angle` units.
+    const pixelsPerUnit = height / (2 * distance * tan);
+    dragSensitivityRef.current = DRAG_TRACKING_GAIN / (pixelsPerUnit * RADIUS);
+  }, [camera, width, height, dragSensitivityRef]);
 
   return null;
 }
@@ -145,58 +99,22 @@ function PerformanceGuard() {
 }
 
 /* ------------------------------------------------------------------ *
- * Selective bloom
- * ------------------------------------------------------------------ */
-
-/**
- * Mounted ONLY while a selection transition is playing.
- *
- * A composer running during normal browsing would cost a full-screen pass every
- * frame for an effect that is invisible 99% of the time. Because the wheel is frozen
- * once the transition starts, the GPU has the headroom exactly when it is needed.
- */
-function SelectionEffects() {
-  const { bloomRef } = useWheel();
-
-  return (
-    <EffectComposer multisampling={0}>
-      <Bloom
-        ref={(instance) => {
-          bloomRef.current = instance as unknown as BloomHandle | null;
-        }}
-        intensity={0}
-        luminanceThreshold={BLOOM_LUMINANCE_THRESHOLD}
-        luminanceSmoothing={BLOOM_LUMINANCE_SMOOTHING}
-        mipmapBlur={BLOOM_MIPMAP_BLUR}
-      />
-    </EffectComposer>
-  );
-}
-
-/* ------------------------------------------------------------------ *
  * Scene graph
  * ------------------------------------------------------------------ */
 
+/**
+ * No lights, no environment map, no post-processing. The logos are unlit, so the
+ * scene is just textured planes on a white clear colour — the cheapest possible frame.
+ */
 function Scene() {
-  const quality = useQuality();
-  const { isTransitioning } = useWheel();
-
   return (
     <>
+      <color attach="background" args={[SCENE_BACKGROUND]} />
       <CameraRig />
-      <Lighting />
 
       <Suspense fallback={<SceneLoader />}>
         <CompanyWheel />
       </Suspense>
-
-      <EnvironmentBoundary>
-        <Suspense fallback={null}>
-          <StudioEnvironment />
-        </Suspense>
-      </EnvironmentBoundary>
-
-      {quality.bloom && isTransitioning && <SelectionEffects />}
 
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
@@ -217,43 +135,20 @@ function Experience() {
 
   const dpr = useMemo<[number, number]>(() => [quality.dpr[0], quality.dpr[1]], [quality.dpr]);
 
-  const handleCreated = useCallback(
-    (state: RootState) => {
-      state.gl.toneMapping = THREE.ACESFilmicToneMapping;
-      state.gl.toneMappingExposure = 1.05;
-
-      if (quality.isHigh) {
-        // Halving the transmission render target is invisible on frosted glass and
-        // roughly quarters the cost of the transmission pass.
-        const renderer = state.gl as THREE.WebGLRenderer & {
-          transmissionResolutionScale?: number;
-        };
-        if (typeof renderer.transmissionResolutionScale === 'number') {
-          renderer.transmissionResolutionScale = TRANSMISSION_RESOLUTION_SCALE;
-        }
-      }
-    },
-    [quality.isHigh],
-  );
-
   return (
     <div className="fixed inset-0">
       <Canvas
         dpr={dpr}
-        shadows={quality.shadows ? 'soft' : false}
+        // `flat` disables tone mapping: brand colours must reach the screen unaltered.
+        flat
         frameloop="always"
-        gl={{
-          antialias: quality.antialias,
-          powerPreference: 'high-performance',
-          alpha: true,
-        }}
+        gl={{ antialias: quality.antialias, powerPreference: 'high-performance' }}
         camera={{
           fov: CAMERA_FOV,
           near: CAMERA_NEAR,
           far: CAMERA_FAR,
           position: [0, 0, RADIUS + CAMERA_BASE_DISTANCE],
         }}
-        onCreated={handleCreated}
       >
         <Scene />
       </Canvas>
@@ -266,7 +161,6 @@ function Experience() {
       <div ref={captureRef} aria-hidden="true" className="absolute inset-0 z-10 touch-none" />
 
       <CompanyHud />
-      <FlashOverlay />
     </div>
   );
 }

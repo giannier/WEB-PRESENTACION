@@ -13,53 +13,38 @@ import {
   type RefObject,
 } from 'react';
 
-import { useQuality } from '@/context/QualityContext';
-import { COMPANIES, COMPANY_COUNT, type Company } from '@/data/companies';
+import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import {
-  BLOOM_PEAK,
   CONFIRM_SCALE,
   CONFIRM_Z_OFFSET,
+  DRAG_SENSITIVITY,
   FOCUS_SNAP_DURATION,
   SELECT_CONFIRM_DURATION,
   SELECT_CONFIRM_FADE,
   SELECT_CONFIRM_FADE_DURATION,
-  SELECT_CONFIRM_FLARE_DURATION,
-  SELECT_CONFIRM_FLARE_START,
-  SELECT_CONFIRM_FLASH_IN_DURATION,
-  SELECT_CONFIRM_FLASH_OUT_DURATION,
-  SELECT_CONFIRM_FLASH_PEAK,
-  SELECT_CONFIRM_FLASH_START,
   SELECT_CONFIRM_PULSE_DURATION,
   SELECT_RESTORE_DURATION,
   SELECT_ROTATION_SNAP_DURATION,
-  SELECT_SCALE,
   SNAP_DURATION,
   SNAP_EASE,
 } from '@/lib/constants';
 import { angleStep, rotationForIndex } from '@/lib/math';
 
 /**
- * Animatable scalars for the selection transition.
+ * Animatable scalars for the confirmation pulse.
  *
  * GSAP only ever writes into this plain object; `useFrame` is the single place that
  * pushes the values onto the scene graph. Keeping the tween target inert is what lets
- * the whole transition run with zero React re-renders.
+ * the pulse run with zero React re-renders.
  */
 export type SelectionProxy = {
-  /** 0 -> 1 fade-out progress of the 18 non-selected cards. */
+  /** 0 -> 1 dim progress of the 18 non-selected logos. */
   fade: number;
-  /** Outward travel of the hero card along the cylinder normal. */
+  /** Outward travel of the chosen logo along the cylinder normal. */
   z: number;
-  /** Absolute scale of the hero card. */
+  /** Absolute scale of the chosen logo. */
   scale: number;
-  /** `emissiveIntensity` of the hero logo. */
-  emissive: number;
-  /** Bloom effect intensity (high tier only). */
-  bloom: number;
 };
-
-/** Minimal structural type for the postprocessing BloomEffect instance we drive. */
-export type BloomHandle = { intensity: number };
 
 /** Screen-space tap forwarded from the DOM capture layer into the R3F raycaster. */
 export type TapHandler = (clientX: number, clientY: number) => void;
@@ -74,18 +59,14 @@ export type WheelContextValue = {
   readonly activeIndexRef: RefObject<number>;
   readonly selectedIndexRef: RefObject<number>;
   readonly selection: RefObject<SelectionProxy>;
-  readonly bloomRef: RefObject<BloomHandle | null>;
-  readonly flashRef: RefObject<HTMLElement | null>;
   readonly tapHandlerRef: RefObject<TapHandler | null>;
-  /** Hero scale solved against the live viewport by `<CameraRig>`. */
-  readonly heroScaleRef: RefObject<number>;
+  /** Radians per pixel of drag, solved by `<CameraRig>` so logos track the finger. */
+  readonly dragSensitivityRef: RefObject<number>;
 
   /* --- rendered state (changes rarely, on purpose) --- */
   readonly activeIndex: number;
   readonly isTransitioning: boolean;
   readonly hasInteracted: boolean;
-  /** Set when the browser refused the new tab, so the HUD can offer a manual link. */
-  readonly blockedCompany: Company | null;
 
   /* --- commands --- */
   readonly reportActiveIndex: (index: number) => void;
@@ -94,23 +75,18 @@ export type WheelContextValue = {
   readonly snapToRotation: (target: number, duration?: number) => void;
   readonly snapToIndex: (index: number, duration?: number) => void;
   readonly nudge: (direction: number) => void;
-  /** Tap on the 3D card: opens the tab itself, then plays the confirmation. */
-  readonly selectCompany: (index: number) => void;
-  /** Anchor click: the browser already opened the tab, so this only plays the confirmation. */
+  /** Plays the acknowledgement pulse. The navigation itself belongs to the anchor. */
   readonly confirmSelection: (index: number) => void;
   readonly resetSelection: () => void;
-  readonly dismissBlockedNotice: () => void;
 };
 
 const WheelContext = createContext<WheelContextValue | null>(null);
 
 function createSelectionProxy(): SelectionProxy {
-  return { fade: 0, z: 0, scale: 1, emissive: 0, bloom: 0 };
+  return { fade: 0, z: 0, scale: 1 };
 }
 
 export function WheelProvider({ children }: { children: ReactNode }) {
-  const quality = useQuality();
-
   const rotation = useRef(0);
   const velocity = useRef(0);
   const isDragging = useRef(false);
@@ -119,21 +95,17 @@ export function WheelProvider({ children }: { children: ReactNode }) {
   const activeIndexRef = useRef(0);
   const selectedIndexRef = useRef(-1);
   const selection = useRef<SelectionProxy>(createSelectionProxy());
-  const bloomRef = useRef<BloomHandle | null>(null);
-  const flashRef = useRef<HTMLElement | null>(null);
   const tapHandlerRef = useRef<TapHandler | null>(null);
-  const heroScaleRef = useRef<number>(SELECT_SCALE);
+  const dragSensitivityRef = useRef<number>(DRAG_SENSITIVITY);
 
   const rotationProxy = useRef({ value: 0 });
   const snapTween = useRef<gsap.core.Tween | null>(null);
   const timeline = useRef<gsap.core.Timeline | null>(null);
-  const hasNavigated = useRef(false);
   const hasInteractedRef = useRef(false);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [blockedCompany, setBlockedCompany] = useState<Company | null>(null);
 
   const reportActiveIndex = useCallback((index: number) => {
     if (activeIndexRef.current === index) return;
@@ -181,9 +153,10 @@ export function WheelProvider({ children }: { children: ReactNode }) {
 
   const snapToIndex = useCallback(
     (index: number, duration: number = FOCUS_SNAP_DURATION) => {
+      markInteracted();
       snapToRotation(rotationForIndex(index, rotation.current, COMPANY_COUNT), duration);
     },
-    [snapToRotation],
+    [markInteracted, snapToRotation],
   );
 
   const nudge = useCallback(
@@ -217,17 +190,9 @@ export function WheelProvider({ children }: { children: ReactNode }) {
     proxy.fade = 0;
     proxy.z = 0;
     proxy.scale = 1;
-    proxy.emissive = 0;
-    proxy.bloom = 0;
-
-    // A killed tween can leave the overlay stranded mid-fade, and the bloom effect is
-    // outside the proxy's reach, so both are written back explicitly.
-    if (flashRef.current !== null) gsap.set(flashRef.current, { opacity: 0 });
-    if (bloomRef.current !== null) bloomRef.current.intensity = 0;
 
     selectedIndexRef.current = -1;
     isTransitioningRef.current = false;
-    hasNavigated.current = false;
     velocity.current = 0;
     isDragging.current = false;
     isSnapping.current = false;
@@ -235,21 +200,18 @@ export function WheelProvider({ children }: { children: ReactNode }) {
     setIsTransitioning(false);
   }, []);
 
-  const dismissBlockedNotice = useCallback(() => {
-    setBlockedCompany(null);
-  }, []);
-
   /**
-   * Phase 1 (confirm) + phase 2 (restore).
+   * Confirm + restore.
    *
-   * The navigation has already been handed to the browser by the time this runs, so
-   * the animation is an acknowledgement rather than a departure: the other cards only
-   * dim, and everything returns to rest on its own. That self-restore is what keeps
-   * the wheel usable when the user switches back to this tab.
+   * The navigation has already been handed to the browser by the anchor, so this is an
+   * acknowledgement rather than a departure: the other logos only dim, and everything
+   * returns to rest on its own. That self-restore keeps the wheel usable when the user
+   * switches back to this tab.
    */
-  const runConfirmation = useCallback(
+  const confirmSelection = useCallback(
     (index: number) => {
       if (isTransitioningRef.current) return;
+      if (COMPANIES[index] === undefined) return;
 
       isTransitioningRef.current = true;
       selectedIndexRef.current = index;
@@ -264,8 +226,6 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       proxy.fade = 0;
       proxy.z = 0;
       proxy.scale = 1;
-      proxy.emissive = 0;
-      proxy.bloom = 0;
 
       rotationProxy.current.value = rotation.current;
       const rotationTarget = rotationForIndex(index, rotation.current, COMPANY_COUNT);
@@ -273,7 +233,7 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       const tl = gsap.timeline({ onComplete: resetSelection });
       timeline.current = tl;
 
-      // 1. Centre the chosen card exactly, in case the snap had not fully resolved.
+      // 1. Centre the chosen logo exactly, in case the snap had not fully resolved.
       tl.to(
         rotationProxy.current,
         {
@@ -287,14 +247,14 @@ export function WheelProvider({ children }: { children: ReactNode }) {
         0,
       );
 
-      // 2. Dim the other eighteen cards. Never to zero — the user is coming back.
+      // 2. Dim the other eighteen logos. Never to zero — the user is coming back.
       tl.to(
         proxy,
         { fade: SELECT_CONFIRM_FADE, duration: SELECT_CONFIRM_FADE_DURATION, ease: 'power2.out' },
         0,
       );
 
-      // 3. Pulse the chosen card forward. A nod of acknowledgement, not a zoom.
+      // 3. Pulse the chosen logo forward.
       tl.to(
         proxy,
         {
@@ -306,107 +266,14 @@ export function WheelProvider({ children }: { children: ReactNode }) {
         0,
       );
 
-      // 4. Logo flare (plus bloom on the high tier only).
+      // 4. Everything back to rest, then unlock.
       tl.to(
         proxy,
-        {
-          emissive: quality.emissivePeak,
-          duration: SELECT_CONFIRM_FLARE_DURATION,
-          ease: 'power2.out',
-        },
-        SELECT_CONFIRM_FLARE_START,
-      );
-
-      if (quality.bloom) {
-        tl.to(
-          proxy,
-          { bloom: BLOOM_PEAK, duration: SELECT_CONFIRM_FLARE_DURATION, ease: 'power2.out' },
-          SELECT_CONFIRM_FLARE_START,
-        );
-      }
-
-      // 5. White wink at the peak of the flare.
-      const flash = flashRef.current;
-      if (flash !== null) {
-        tl.to(
-          flash,
-          {
-            opacity: SELECT_CONFIRM_FLASH_PEAK,
-            duration: SELECT_CONFIRM_FLASH_IN_DURATION,
-            ease: 'power2.out',
-          },
-          SELECT_CONFIRM_FLASH_START,
-        );
-        tl.to(
-          flash,
-          { opacity: 0, duration: SELECT_CONFIRM_FLASH_OUT_DURATION, ease: 'power2.in' },
-          SELECT_CONFIRM_FLASH_START + SELECT_CONFIRM_FLASH_IN_DURATION,
-        );
-      }
-
-      // 6. Phase 2: everything back to rest, then unlock.
-      tl.to(
-        proxy,
-        {
-          fade: 0,
-          z: 0,
-          scale: 1,
-          emissive: 0,
-          bloom: 0,
-          duration: SELECT_RESTORE_DURATION,
-          ease: 'power2.out',
-        },
+        { fade: 0, z: 0, scale: 1, duration: SELECT_RESTORE_DURATION, ease: 'power2.out' },
         SELECT_CONFIRM_DURATION,
       );
     },
-    [killSnap, markInteracted, quality.bloom, quality.emissivePeak, resetSelection],
-  );
-
-  /**
-   * Tap on the 3D card. There is no anchor here, so the tab is opened in code.
-   *
-   * The `window.open` call MUST stay synchronous inside this handler: moving it into
-   * the timeline's `onComplete` would put it hundreds of milliseconds past the gesture,
-   * outside the transient user activation window, and the popup blocker would eat it.
-   */
-  const selectCompany = useCallback(
-    (index: number) => {
-      // Guard against a double fire: anchor click landing on the same frame as a tap.
-      if (isTransitioningRef.current) return;
-      const company = COMPANIES[index];
-      if (company === undefined) return;
-      if (hasNavigated.current) return;
-      hasNavigated.current = true;
-
-      const tab = window.open(company.url, '_blank');
-
-      if (tab === null) {
-        // Blocked. Keep the wheel alive and offer a real anchor instead — a direct
-        // click on one is a fresh gesture and cannot be refused.
-        hasNavigated.current = false;
-        setBlockedCompany(company);
-        return;
-      }
-
-      // Sever the back-reference so the destination cannot reach into this page via
-      // `window.opener`. Passing 'noopener' to `window.open` would have returned null
-      // and made a blocked popup indistinguishable from a successful one.
-      tab.opener = null;
-
-      setBlockedCompany(null);
-      runConfirmation(index);
-    },
-    [runConfirmation],
-  );
-
-  /** Anchor click path: the browser performs the navigation, this only animates. */
-  const confirmSelection = useCallback(
-    (index: number) => {
-      if (COMPANIES[index] === undefined) return;
-      setBlockedCompany(null);
-      runConfirmation(index);
-    },
-    [runConfirmation],
+    [killSnap, markInteracted, resetSelection],
   );
 
   // Strict Mode double-invokes effects; every tween is created from an event handler,
@@ -427,11 +294,10 @@ export function WheelProvider({ children }: { children: ReactNode }) {
   /**
    * Recovery: a locked wheel must never outlive the user leaving the page.
    *
-   * `pageshow` with `persisted` is the important one. Following a link restores this
-   * page from the back/forward cache with its JS heap frozen exactly as it was left —
-   * mid-transition, input locked, cards dimmed — and no React state update or effect
-   * would otherwise fire to clear it. Visibility and focus cover tab switching, and
-   * are guarded so an ordinary refocus never disturbs a running confirmation.
+   * `pageshow` with `persisted` is the important one: a back/forward cache restore
+   * brings this page back with its JS heap frozen exactly as it was left, and no React
+   * update or effect would otherwise fire to clear it. Visibility and focus cover tab
+   * switching, and are guarded so an ordinary refocus never disturbs a running pulse.
    */
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
@@ -465,40 +331,32 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       activeIndexRef,
       selectedIndexRef,
       selection,
-      bloomRef,
-      flashRef,
       tapHandlerRef,
-      heroScaleRef,
+      dragSensitivityRef,
       activeIndex,
       isTransitioning,
       hasInteracted,
-      blockedCompany,
       reportActiveIndex,
       markInteracted,
       killSnap,
       snapToRotation,
       snapToIndex,
       nudge,
-      selectCompany,
       confirmSelection,
       resetSelection,
-      dismissBlockedNotice,
     }),
     [
       activeIndex,
       isTransitioning,
       hasInteracted,
-      blockedCompany,
       reportActiveIndex,
       markInteracted,
       killSnap,
       snapToRotation,
       snapToIndex,
       nudge,
-      selectCompany,
       confirmSelection,
       resetSelection,
-      dismissBlockedNotice,
     ],
   );
 

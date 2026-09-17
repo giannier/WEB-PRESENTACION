@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useWheel } from '@/context/WheelContext';
 import { COMPANY_COUNT } from '@/data/companies';
 import {
-  DRAG_SENSITIVITY,
   FRICTION,
   MAX_VELOCITY,
   POINTER_IDLE_RESET_MS,
@@ -68,15 +67,22 @@ export function useWheelPhysics(): (delta: number) => number {
   );
 }
 
-/** Converts a `wheel` event into a consistent pixel delta regardless of `deltaMode`. */
+/**
+ * Converts a `wheel` event into a consistent pixel delta regardless of `deltaMode`.
+ *
+ * Takes whichever axis dominates: a mouse only ever reports `deltaY`, while a trackpad
+ * swiped sideways reports `deltaX`. Both must spin a wheel that now travels horizontally.
+ */
 function normalizeWheelDelta(event: WheelEvent): number {
+  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+
   switch (event.deltaMode) {
     case 1: // DOM_DELTA_LINE
-      return event.deltaY * WHEEL_LINE_HEIGHT;
+      return delta * WHEEL_LINE_HEIGHT;
     case 2: // DOM_DELTA_PAGE
-      return event.deltaY * WHEEL_PAGE_HEIGHT;
+      return delta * WHEEL_PAGE_HEIGHT;
     default: // DOM_DELTA_PIXEL
-      return event.deltaY;
+      return delta;
   }
 }
 
@@ -87,9 +93,10 @@ function normalizeWheelDelta(event: WheelEvent): number {
  * forwarded to the raycast handler that `<CompanyWheel>` registers, because the capture
  * layer sits above the canvas and would otherwise swallow every R3F pointer event.
  *
- * Direction contract:
- *  - dragging follows the finger (drag down, cards travel down),
- *  - wheel and arrow keys follow list-scrolling convention (scroll down, cards travel up).
+ * Direction contract (the wheel travels horizontally):
+ *  - dragging follows the finger (swipe left, cards travel left),
+ *  - scrolling down, swiping a trackpad left and ArrowRight/ArrowDown all advance to the
+ *    next company, so the cards travel from right to left.
  */
 export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): void {
   const {
@@ -98,13 +105,14 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
     isDragging,
     isTransitioningRef,
     tapHandlerRef,
+    dragSensitivityRef,
     killSnap,
     markInteracted,
     nudge,
   } = useWheel();
 
   const pointerId = useRef<number | null>(null);
-  const lastY = useRef(0);
+  const lastX = useRef(0);
   const lastTime = useRef(0);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -131,7 +139,7 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
       travelled.current = 0;
       startX.current = event.clientX;
       startY.current = event.clientY;
-      lastY.current = event.clientY;
+      lastX.current = event.clientX;
       lastTime.current = event.timeStamp;
     };
 
@@ -139,8 +147,10 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
       if (pointerId.current !== event.pointerId) return;
       if (!isDragging.current || isTransitioningRef.current) return;
 
-      const deltaPixels = event.clientY - lastY.current;
-      const deltaRadians = deltaPixels * DRAG_SENSITIVITY;
+      const deltaPixels = event.clientX - lastX.current;
+      // Negated: an increasing rotation carries cards leftwards, so a finger moving
+      // left (negative delta) must increase it for the card to follow the finger.
+      const deltaRadians = -deltaPixels * dragSensitivityRef.current;
       rotation.current += deltaRadians;
 
       const deltaSeconds = (event.timeStamp - lastTime.current) / 1000;
@@ -152,7 +162,7 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
       }
 
       travelled.current += Math.abs(deltaPixels);
-      lastY.current = event.clientY;
+      lastX.current = event.clientX;
       lastTime.current = event.timeStamp;
     };
 
@@ -192,16 +202,23 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
       killSnap();
       markInteracted();
 
-      const next = velocity.current - normalizeWheelDelta(event) * WHEEL_SENSITIVITY;
+      const next = velocity.current + normalizeWheelDelta(event) * WHEEL_SENSITIVITY;
       velocity.current = clamp(next, -MAX_VELOCITY, MAX_VELOCITY);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isTransitioningRef.current) return;
-      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+      // The listener is global, so arrow keys pressed while typing in a form field or
+      // navigating an open dialog must never spin the wheel behind it.
+      const target = event.target;
+      if (target instanceof Element && target.closest('input, textarea, select, dialog')) return;
+
+      const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+      const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+      if (!forward && !backward) return;
 
       event.preventDefault();
-      nudge(event.key === 'ArrowDown' ? -1 : 1);
+      nudge(forward ? 1 : -1);
     };
 
     element.addEventListener('pointerdown', handlePointerDown);
@@ -233,6 +250,7 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
     isDragging,
     isTransitioningRef,
     tapHandlerRef,
+    dragSensitivityRef,
     killSnap,
     markInteracted,
     nudge,

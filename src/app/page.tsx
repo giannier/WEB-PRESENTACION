@@ -23,7 +23,7 @@ export default function HomePage() {
 
       <noscript>
         <div className="fixed inset-0 z-50 flex items-center justify-center px-8 text-center">
-          <p className="text-sm text-white/70">
+          <p className="text-sm text-neutral-600">
             Esta experiencia requiere JavaScript para mostrar el ecosistema de empresas.
           </p>
         </div>
