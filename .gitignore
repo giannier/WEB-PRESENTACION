@@ -31,6 +31,9 @@ yarn-error.log*
 .env*.local
 .env.*
 
+# local contact submissions (development fallback when Google Sheets is not connected)
+/.data
+
 # typescript
 *.tsbuildinfo
 
