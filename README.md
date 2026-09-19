@@ -108,13 +108,19 @@ follows the finger on any screen size.
 
 ## The showcase panel
 
-Artwork is looked up by convention: drop `public/media/<slug>.jpg` and that company
-lights up, with no code change. A missing file falls back to a gradient built from the
-company's brand colour, so nothing ever renders broken. For a video, declare it in
-`companyProfiles.ts`:
+Artwork is looked up by convention: drop a file into `public/portadas/<slug>.<ext>` —
+`.jpg`, `.png`, `.webp`, `.avif`, or a video (`.mp4`, `.webm`, `.mov`) with a same-named
+image alongside it as the poster frame — and that company lights up, with no code
+change. `npm run covers:scan` resolves the folder into a generated manifest
+(`src/data/companyCovers.ts`); it also runs automatically before `dev` and `build`, so
+Vercel regenerates it from whatever is committed on every deploy. A company with no file
+yet falls back to a gradient built from its brand colour, so nothing ever renders broken.
+
+To point a company at artwork living somewhere else, override it explicitly in
+`companyProfiles.ts` instead:
 
 ```ts
-media: { type: 'video', src: '/media/agrosumak.mp4', poster: '/media/agrosumak.jpg' },
+media: { type: 'video', src: '/portadas/agrosumak.mp4', poster: '/portadas/agrosumak.jpg' },
 ```
 
 Headlines are split into `lead` / `highlight` / `tail` so the middle part can be painted
