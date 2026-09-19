@@ -1,12 +1,12 @@
 'use client';
 
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 
 import { CompanyCard, type CardHandle } from '@/components/wheel/CompanyCard';
 import { createLogoGeometry } from '@/components/wheel/logoGeometry';
-import { useWheel, type TapHandler } from '@/context/WheelContext';
+import { useWheel } from '@/context/WheelContext';
 import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import { useCompanyTextures } from '@/hooks/useCompanyTextures';
 import { useWheelPhysics } from '@/hooks/useWheelPhysics';
@@ -27,11 +27,6 @@ import {
 } from '@/lib/constants';
 import { angleStep, damp, normalizeIndex, smoothstep, wrapAngle } from '@/lib/math';
 
-/* Scratch objects hoisted to module scope: nothing is allocated per frame or per tap. */
-const POINTER = new THREE.Vector2();
-const RAYCASTER = new THREE.Raycaster();
-const RAY_TARGETS: THREE.Object3D[] = [];
-
 /**
  * The cylinder.
  *
@@ -43,9 +38,6 @@ export function CompanyWheel() {
   const wheel = useWheel();
   const advance = useWheelPhysics();
   const textures = useCompanyTextures();
-
-  const gl = useThree((state) => state.gl);
-  const camera = useThree((state) => state.camera);
 
   const groupRef = useRef<THREE.Group>(null);
   const handles = useRef<Array<CardHandle | null>>(
@@ -68,51 +60,6 @@ export function CompanyWheel() {
   const register = useCallback((index: number, handle: CardHandle | null) => {
     handles.current[index] = handle;
   }, []);
-
-  /* ------------------------------------------------------------------ *
-   * Tap handling
-   *
-   * The DOM capture layer sits above the canvas and swallows pointer events, so R3F
-   * never sees a click. Instead the capture layer forwards taps here and we raycast
-   * manually — once per tap rather than on every pointer move.
-   *
-   * A tap only ever SELECTS. Opening the company website is the job of the dedicated
-   * "Ingresar a la web" button, so tapping the front logo does nothing and tapping any
-   * other logo brings it to the front.
-   * ------------------------------------------------------------------ */
-  const { tapHandlerRef, activeIndexRef, snapToIndex } = wheel;
-
-  useEffect(() => {
-    const handleTap: TapHandler = (clientX, clientY) => {
-      const rect = gl.domElement.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-
-      POINTER.set(
-        ((clientX - rect.left) / rect.width) * 2 - 1,
-        -((clientY - rect.top) / rect.height) * 2 + 1,
-      );
-      RAYCASTER.setFromCamera(POINTER, camera);
-
-      RAY_TARGETS.length = 0;
-      for (const handle of handles.current) {
-        if (handle !== null) RAY_TARGETS.push(handle.logoMesh);
-      }
-
-      const hit = RAYCASTER.intersectObjects(RAY_TARGETS, false)[0];
-      RAY_TARGETS.length = 0;
-      if (hit === undefined) return;
-
-      const index = hit.object.userData.cardIndex;
-      if (typeof index !== 'number' || index === activeIndexRef.current) return;
-
-      snapToIndex(index);
-    };
-
-    tapHandlerRef.current = handleTap;
-    return () => {
-      if (tapHandlerRef.current === handleTap) tapHandlerRef.current = null;
-    };
-  }, [gl, camera, tapHandlerRef, activeIndexRef, snapToIndex]);
 
   /* ------------------------------------------------------------------ *
    * The single frame loop

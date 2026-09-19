@@ -17,8 +17,6 @@ export type CardHandle = {
   readonly sinAngle: number;
   readonly cosAngle: number;
   readonly group: THREE.Group;
-  /** Raycast target for taps. */
-  readonly logoMesh: THREE.Mesh;
   readonly logoMaterial: THREE.MeshBasicMaterial;
 };
 
@@ -48,7 +46,6 @@ function readTextureAspect(texture: THREE.Texture): number {
  */
 export function CompanyCard({ index, angle, texture, logoGeometry, register }: CompanyCardProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const logoMeshRef = useRef<THREE.Mesh>(null);
 
   const logoMaterial = useMemo(
     () =>
@@ -73,10 +70,7 @@ export function CompanyCard({ index, angle, texture, logoGeometry, register }: C
   // rendered frame, so no logo is ever painted sitting at the untransformed origin.
   useLayoutEffect(() => {
     const group = groupRef.current;
-    const logoMesh = logoMeshRef.current;
-    if (group === null || logoMesh === null) return;
-
-    logoMesh.userData.cardIndex = index;
+    if (group === null) return;
 
     register(index, {
       index,
@@ -84,7 +78,6 @@ export function CompanyCard({ index, angle, texture, logoGeometry, register }: C
       sinAngle: trig.sin,
       cosAngle: trig.cos,
       group,
-      logoMesh,
       logoMaterial,
     });
 
@@ -102,7 +95,6 @@ export function CompanyCard({ index, angle, texture, logoGeometry, register }: C
   return (
     <group ref={groupRef}>
       <mesh
-        ref={logoMeshRef}
         geometry={logoGeometry}
         material={logoMaterial}
         scale={[logoSize.width, logoSize.height, 1]}

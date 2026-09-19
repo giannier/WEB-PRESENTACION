@@ -104,7 +104,6 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
     velocity,
     isDragging,
     isTransitioningRef,
-    tapHandlerRef,
     dragSensitivityRef,
     killSnap,
     markInteracted,
@@ -181,9 +180,10 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
       const vertical = Math.abs(event.clientY - startY.current);
       const isTap = Math.hypot(horizontal, vertical) < TAP_THRESHOLD_PX;
 
+      // A tap is a brake: it stops a coasting wheel on the spot. There is nothing to
+      // hit-test any more, since only the focused company is ever on screen.
       if (isTap) {
         velocity.current = 0;
-        tapHandlerRef.current?.(event.clientX, event.clientY);
         return;
       }
 
@@ -249,7 +249,6 @@ export function useWheelInput(targetRef: React.RefObject<HTMLElement | null>): v
     velocity,
     isDragging,
     isTransitioningRef,
-    tapHandlerRef,
     dragSensitivityRef,
     killSnap,
     markInteracted,

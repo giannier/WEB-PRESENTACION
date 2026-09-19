@@ -18,7 +18,6 @@ import {
   CONFIRM_SCALE,
   CONFIRM_Z_OFFSET,
   DRAG_SENSITIVITY,
-  FOCUS_SNAP_DURATION,
   SELECT_CONFIRM_DURATION,
   SELECT_CONFIRM_FADE,
   SELECT_CONFIRM_FADE_DURATION,
@@ -46,9 +45,6 @@ export type SelectionProxy = {
   scale: number;
 };
 
-/** Screen-space tap forwarded from the DOM capture layer into the R3F raycaster. */
-export type TapHandler = (clientX: number, clientY: number) => void;
-
 export type WheelContextValue = {
   /* --- mutable per-frame state (never triggers a render) --- */
   readonly rotation: RefObject<number>;
@@ -59,7 +55,6 @@ export type WheelContextValue = {
   readonly activeIndexRef: RefObject<number>;
   readonly selectedIndexRef: RefObject<number>;
   readonly selection: RefObject<SelectionProxy>;
-  readonly tapHandlerRef: RefObject<TapHandler | null>;
   /** Radians per pixel of drag, solved by `<CameraRig>` so logos track the finger. */
   readonly dragSensitivityRef: RefObject<number>;
 
@@ -73,11 +68,9 @@ export type WheelContextValue = {
   readonly markInteracted: () => void;
   readonly killSnap: () => void;
   readonly snapToRotation: (target: number, duration?: number) => void;
-  readonly snapToIndex: (index: number, duration?: number) => void;
   readonly nudge: (direction: number) => void;
   /** Plays the acknowledgement pulse. The navigation itself belongs to the anchor. */
   readonly confirmSelection: (index: number) => void;
-  readonly resetSelection: () => void;
 };
 
 const WheelContext = createContext<WheelContextValue | null>(null);
@@ -95,7 +88,6 @@ export function WheelProvider({ children }: { children: ReactNode }) {
   const activeIndexRef = useRef(0);
   const selectedIndexRef = useRef(-1);
   const selection = useRef<SelectionProxy>(createSelectionProxy());
-  const tapHandlerRef = useRef<TapHandler | null>(null);
   const dragSensitivityRef = useRef<number>(DRAG_SENSITIVITY);
 
   const rotationProxy = useRef({ value: 0 });
@@ -149,14 +141,6 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       });
     },
     [killSnap],
-  );
-
-  const snapToIndex = useCallback(
-    (index: number, duration: number = FOCUS_SNAP_DURATION) => {
-      markInteracted();
-      snapToRotation(rotationForIndex(index, rotation.current, COMPANY_COUNT), duration);
-    },
-    [markInteracted, snapToRotation],
   );
 
   const nudge = useCallback(
@@ -331,7 +315,6 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       activeIndexRef,
       selectedIndexRef,
       selection,
-      tapHandlerRef,
       dragSensitivityRef,
       activeIndex,
       isTransitioning,
@@ -340,10 +323,8 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       markInteracted,
       killSnap,
       snapToRotation,
-      snapToIndex,
       nudge,
       confirmSelection,
-      resetSelection,
     }),
     [
       activeIndex,
@@ -353,10 +334,8 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       markInteracted,
       killSnap,
       snapToRotation,
-      snapToIndex,
       nudge,
       confirmSelection,
-      resetSelection,
     ],
   );
 

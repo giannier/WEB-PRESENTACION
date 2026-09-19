@@ -145,15 +145,11 @@ function Experience() {
 
       <div className="relative min-h-0 flex-1">
         {/*
-          On portrait the HUD sits under the wheel, so the canvas stops short of it: the
-          camera frames the logo inside the space that is actually free, instead of
-          centring it behind the buttons. In landscape the HUD floats over a full-height
-          panel, except on a short screen (a phone on its side) where it would still
-          collide.
+          The canvas always stops above the HUD, so the camera frames the logo inside
+          the space that is actually free instead of centring it behind the buttons.
+          Portrait needs more room because the chrome is stacked taller there.
         */}
-        {/* The underscores are required: Tailwind turns them into the spaces the media
-            query needs, and without them the whole rule is silently dropped. */}
-        <div className="absolute inset-x-0 bottom-40 top-0 landscape:bottom-0 [@media(orientation:landscape)_and_(max-height:820px)]:bottom-32">
+        <div className="absolute inset-x-0 bottom-40 top-0 landscape:bottom-32">
           <Canvas
             dpr={dpr}
             // `flat` disables tone mapping: brand colours must reach the screen unaltered.

@@ -94,10 +94,10 @@ Everything lives in `src/lib/constants.ts`. The ones you are most likely to touc
 | --- | --- | --- |
 | `RADIUS` | `11` | Cylinder radius; must keep neighbouring logos apart |
 | `LOGO_SIZE` | `3.4` | Square box each logo is fitted into |
-| `CAMERA_WIDTH_MARGIN` | `1.39` | Framing on portrait screens (front logo ~72% of width) |
-| `CAMERA_HEIGHT_MARGIN` | `2.0` | Framing on landscape screens (front logo ~50% of height) |
-| `FOCUS_INNER` / `FOCUS_OUTER` | `0.02` / `0.22` | Where focus starts/ends decaying; steep so the front logo dominates |
-| `FOCUS_SCALE_FAR` / `FOCUS_OPACITY_FAR` | `0.55` / `0.25` | Size and opacity of defocused logos |
+| `CAMERA_WIDTH_MARGIN` | `1.18` | Framing on portrait screens (logo ~85% of width) |
+| `CAMERA_HEIGHT_MARGIN` | `1.61` | Framing on landscape screens (logo ~62% of the free height) |
+| `FOCUS_INNER` / `FOCUS_OUTER` | `0.012` / `0.092` | Where a logo starts and finishes fading; outer must stay under `1/19` |
+| `FOCUS_SCALE_FAR` / `FOCUS_OPACITY_FAR` | `0.88` / `0` | Size and opacity of every logo that is not in focus |
 | `FRICTION` | `0.94` | Velocity retained per 1/60 s |
 | `DRAG_TRACKING_GAIN` | `1.15` | Drag speed relative to exact finger tracking |
 
@@ -144,8 +144,12 @@ logo inside the space that is actually free.
 | Drag / swipe horizontally | Wheel follows the pointer, then coasts and snaps |
 | Mouse wheel / trackpad | Scroll down or swipe left advances to the next company |
 | `ArrowRight` / `ArrowLeft` | Next / previous company (ignored while typing in a form) |
-| Tap a side logo | Brings it to the front |
-| Tap the front logo | Nothing — use the buttons |
+| Tap | Stops a coasting wheel |
+
+**One company at a time.** `FOCUS_OUTER` (0.092) sits below the angular distance between
+neighbours (0.105), so a logo fades out completely before the next one could appear
+beside it; mid-swipe the two cross-fade through each other at about half opacity. Nothing
+is hit-tested, because nothing but the focused company is ever on screen.
 
 ---
 

@@ -50,19 +50,18 @@ export const CAMERA_BASE_DISTANCE = 9;
 export const CAMERA_MIN_DISTANCE = 4.6;
 /** A portrait phone needs ~14 units of pull-back to fit the front logo plus a peek. */
 export const CAMERA_MAX_DISTANCE = 16;
-/**
- * Governs narrow (portrait) screens. The front logo spans roughly 72% of the width and
- * the edges of both neighbours peek in, which is what tells the user to swipe sideways.
+/*
+ * Only one company is ever on screen, so the framing no longer has to leave room for
+ * neighbours: both margins are as tight as the chrome allows. The logo lands at
+ * `1 / MARGIN` of the panel — 85% of the width, or 62% of the height, whichever binds
+ * first. The canvas itself stops above the buttons (see `SceneCanvas`), so this is 62%
+ * of the free space rather than of the whole panel.
  */
-export const CAMERA_WIDTH_MARGIN = 1.39;
-/**
- * Governs wide (landscape) screens. The front logo takes about half the panel height.
- *
- * Tablets turned sideways are shorter than a desktop display, so instead of shrinking
- * the logo everywhere, the canvas itself stops above the buttons on short landscape
- * screens (see `SceneCanvas`). The logo then keeps its presence on every device.
- */
-export const CAMERA_HEIGHT_MARGIN = 2.0;
+
+/** Governs narrow (portrait) screens. */
+export const CAMERA_WIDTH_MARGIN = 1.18;
+/** Governs wide (landscape) screens. */
+export const CAMERA_HEIGHT_MARGIN = 1.61;
 
 /* ------------------------------------------------------------------ *
  * Rotation physics
@@ -76,8 +75,6 @@ export const MAX_VELOCITY = 9;
 export const SNAP_VELOCITY_THRESHOLD = 0.08;
 export const SNAP_DURATION = 0.6;
 export const SNAP_EASE = 'power3.out';
-/** Duration used when a tap on a background logo pulls it to the front. */
-export const FOCUS_SNAP_DURATION = 0.55;
 
 /**
  * Fallback radians of rotation per pixel of drag, used only until `<CameraRig>` has
@@ -114,21 +111,23 @@ export const MAX_FRAME_DELTA = 1 / 20;
  * Per-logo focus falloff
  * ------------------------------------------------------------------ */
 
-/** Normalised angular distance (0 = front, 1 = directly behind) where focus starts to decay. */
-export const FOCUS_INNER = 0.02;
 /**
- * Normalised angular distance where a logo is fully defocused.
+ * ONE COMPANY AT A TIME.
  *
- * Deliberately steep: the direct neighbours settle around 83% scale and the ones after
- * them bottom out, so the selected company is unmistakably the protagonist.
+ * Neighbours sit `1 / 19` of a turn away, which is 0.105 in this normalised distance.
+ * `FOCUS_OUTER` is set below that, so a logo is completely gone before its neighbour
+ * could appear beside it: what the eye sees is a single company, and mid-swipe the two
+ * simply cross-fade through each other.
  */
-export const FOCUS_OUTER = 0.22;
+export const FOCUS_INNER = 0.012;
+export const FOCUS_OUTER = 0.092;
 
 export const FOCUS_SCALE_NEAR = 1.0;
-export const FOCUS_SCALE_FAR = 0.55;
+/** Arrives slightly small and settles into place, rather than snapping in at full size. */
+export const FOCUS_SCALE_FAR = 0.88;
 export const FOCUS_OPACITY_NEAR = 1.0;
-/** On white, lowering opacity washes a logo out toward the background. */
-export const FOCUS_OPACITY_FAR = 0.25;
+/** Fully transparent: this is the value that keeps the wheel down to one company. */
+export const FOCUS_OPACITY_FAR = 0;
 
 /** Multiplier applied to logos on the far side of the cylinder so depth reads clearly. */
 export const BACKFACE_DIM = 0.2;
