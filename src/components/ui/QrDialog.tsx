@@ -8,6 +8,7 @@ import { ExternalIcon } from '@/components/ui/icons';
 import { Modal } from '@/components/ui/Modal';
 import { getLogoPath, type Company } from '@/data/companies';
 import { socialLinksFor } from '@/data/companySocials';
+import { logoAspectRatio } from '@/data/logoAspectRatios';
 import { SOCIAL_NETWORKS } from '@/data/socialNetworks';
 
 type QrDialogProps = {
@@ -17,6 +18,7 @@ type QrDialogProps = {
 };
 
 const QR_SIZE = 236;
+/** Longer side of the centre mark. The shorter side is derived from the logo's shape. */
 const QR_LOGO_SIZE = 52;
 const LOCAL_HOST_PATTERN = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\])$/;
 
@@ -41,6 +43,17 @@ export function QrDialog({ company, open, onClose }: QrDialogProps) {
   const isLocalOnly = useMemo(() => LOCAL_HOST_PATTERN.test(new URL(target).hostname), [target]);
   const links = socialLinksFor(company.slug);
 
+  /**
+   * qrcode.react stretches the centre image to exactly `width` × `height`
+   * (`preserveAspectRatio="none"`), so a fixed square box would squash any logo that
+   * is not itself square. Sizing the box to the logo's real aspect ratio keeps the mark
+   * legible instead of visibly warped — and shrinks the excavated hole in the QR
+   * pattern for a squat logo, if anything making the code easier to scan, not harder.
+   */
+  const aspect = logoAspectRatio(company.slug);
+  const logoWidth = aspect >= 1 ? QR_LOGO_SIZE : QR_LOGO_SIZE * aspect;
+  const logoHeight = aspect >= 1 ? QR_LOGO_SIZE / aspect : QR_LOGO_SIZE;
+
   return (
     <Modal
       open={open}
@@ -61,8 +74,8 @@ export function QrDialog({ company, open, onClose }: QrDialogProps) {
             title={`Código QR de redes sociales de ${company.name}`}
             imageSettings={{
               src: getLogoPath(company.slug),
-              width: QR_LOGO_SIZE,
-              height: QR_LOGO_SIZE,
+              width: logoWidth,
+              height: logoHeight,
               excavate: true,
             }}
           />
