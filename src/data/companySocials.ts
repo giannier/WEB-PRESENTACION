@@ -56,6 +56,10 @@ export const COMPANY_SOCIALS: Readonly<Record<string, CompanySocials>> = {
     whatsapp: 'https://wa.me/51974667498',
   },
   zentek360: {
+    instagram: 'https://www.instagram.com/somoszentek360',
+    facebook: 'https://www.facebook.com/somoszentek360',
+    tiktok: 'https://www.tiktok.com/@somoszentek360',
+    youtube: 'https://www.youtube.com/@somoszentek360peru',
     whatsapp: 'https://wa.me/51964155424',
   },
   surelife360: {
@@ -71,17 +75,37 @@ export const COMPANY_SOCIALS: Readonly<Record<string, CompanySocials>> = {
     youtube: 'https://www.youtube.com/@Sumak.Agropecuaria',
   },
   ssomasafe: {
-    whatsapp: 'https://wa.me/51967285628',
+    instagram: 'https://www.instagram.com/somos.ssoma.peru',
+    facebook: 'https://www.facebook.com/somos.ssoma.peru',
+    tiktok: 'https://www.tiktok.com/@somos.ssoma.peru',
+    youtube: 'https://www.youtube.com/@somos_ssoma_peru',
+    // Shared management line with quantukperu and abubu.
+    whatsapp: 'https://wa.me/51943704298',
   },
-  trustagroexport: {},
-  abubu: {},
+  trustagroexport: {
+    // Published on their own site with a leading "@" — not standard Facebook syntax,
+    // but kept verbatim since that is what the company itself links to.
+    facebook: 'https://www.facebook.com/@somostrustagroexport',
+    instagram: 'https://www.instagram.com/somostrustagroexport',
+    tiktok: 'https://www.tiktok.com/@somostrustagroexport',
+    // Shared management line with ssomasafe, quantukperu and abubu.
+    whatsapp: 'https://wa.me/51943704298',
+  },
+  abubu: {
+    // Shared management line with ssomasafe and quantukperu.
+    whatsapp: 'https://wa.me/51943704298',
+  },
   supplylogistic360: {
     instagram: 'https://www.instagram.com/supply360.pe',
     facebook: 'https://www.facebook.com/profile.php?id=61589657582574',
     tiktok: 'https://www.tiktok.com/@supply.360',
     youtube: 'https://www.youtube.com/@supply360_peru',
   },
-  corporacionyanayacu: {},
+  corporacionyanayacu: {
+    facebook: 'https://www.facebook.com/somoscorporacionyanayacu',
+    instagram: 'https://www.instagram.com/corporacion.yanayacu',
+    tiktok: 'https://www.tiktok.com/@somoscorporacionyanayacu',
+  },
   tuperfil360: {
     instagram: 'https://www.instagram.com/tuperfil360',
     facebook: 'https://www.facebook.com/profile.php?id=61590079145377',
@@ -103,6 +127,11 @@ export const COMPANY_SOCIALS: Readonly<Record<string, CompanySocials>> = {
     youtube: 'https://www.youtube.com/@Ynsumedic',
   },
   quantukperu: {
+    instagram: 'https://www.instagram.com/somosquantukperu',
+    facebook: 'https://www.facebook.com/somosquantukperu',
+    tiktok: 'https://www.tiktok.com/@somosquantukperu',
+    youtube: 'https://www.youtube.com/@somosquantukperu',
+    // Shared management line with ssomasafe and abubu.
     whatsapp: 'https://wa.me/51943704298',
   },
 };
