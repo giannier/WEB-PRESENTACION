@@ -5,8 +5,11 @@
   "type": "module",
   "description": "Interactive 3D cylindrical company wheel for the corporate group presentation site.",
   "scripts": {
+    "predev": "node scripts/scan-covers.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/scan-covers.mjs",
     "build": "next build",
+    "covers:scan": "node scripts/scan-covers.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "logos:optimize": "node scripts/optimize-logos.mjs",

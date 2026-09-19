@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 
 import { getLogoPath, type Company } from '@/data/companies';
-import { defaultMediaFor, profileFor } from '@/data/companyProfiles';
+import { coverFor } from '@/data/companyCovers';
+import { profileFor } from '@/data/companyProfiles';
 
 type ShowcaseMediaProps = {
   readonly company: Company;
@@ -13,22 +14,21 @@ type ShowcaseMediaProps = {
 /**
  * Reference artwork for the focused company: image, video, or a branded fallback.
  *
- * The file is looked up by convention (`/media/<slug>.jpg`) unless the profile declares
- * something else, and a missing file simply falls back to a gradient built from the
- * company's own colour. Dropping artwork into `public/media` is therefore all it takes
- * to light a company up — no code change, and no broken image if it is not there yet.
+ * The file comes from the manifest that `scripts/scan-covers.mjs` builds out of
+ * `public/portadas`, so any format works and nothing needs renaming. A company with no
+ * artwork yet falls back to a gradient in its own colour rather than a broken image.
  */
 export function ShowcaseMedia({ company, color }: ShowcaseMediaProps) {
-  const media = profileFor(company.slug).media ?? defaultMediaFor(company.slug);
+  const media = profileFor(company.slug).media ?? coverFor(company.slug);
   const [failed, setFailed] = useState(false);
 
-  // Each company gets a fresh attempt; otherwise the first missing file would keep
-  // every later company on the fallback.
+  // Each company gets a fresh attempt; otherwise one unreadable file would keep every
+  // later company on the fallback.
   useEffect(() => {
     setFailed(false);
   }, [company.slug]);
 
-  if (failed) {
+  if (media === undefined || failed) {
     return (
       <div
         className="absolute inset-0"

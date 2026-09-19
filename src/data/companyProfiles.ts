@@ -28,8 +28,8 @@ export type CompanyProfile = {
   readonly phone: string;
   readonly email: string;
   /**
-   * Optional. When omitted, `/media/<slug>.jpg` is attempted and a branded gradient is
-   * shown if that file does not exist — so adding artwork needs no code change.
+   * Optional override. Normally artwork is picked up automatically from
+   * `public/portadas/<slug>.<ext>`; set this only to point somewhere else.
    */
   readonly media?: ShowcaseMedia;
 };
@@ -104,7 +104,9 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'LA SEGURIDAD',
     tail: 'Y CONTINUIDAD OPERATIVA',
     subtitle: 'Consultoría en seguridad y salud en el trabajo, y EPP certificados',
-    phone: '+51 967 285 628',
+    // Shared management line with quantukperu and abubu — confirmed by the site's own
+    // JSON-LD "telephone" field, and by the user (same ownership across the three).
+    phone: '+51 943 704 298',
     email: 'info@ssomasafe.com',
   },
   trustagroexport: {
@@ -206,9 +208,4 @@ const FALLBACK_PROFILE: CompanyProfile = {
 
 export function profileFor(slug: string): CompanyProfile {
   return COMPANY_PROFILES[slug] ?? FALLBACK_PROFILE;
-}
-
-/** Conventional artwork path when a profile does not declare its own media. */
-export function defaultMediaFor(slug: string): ShowcaseMedia {
-  return { type: 'image', src: `/media/${slug}.jpg` };
 }
