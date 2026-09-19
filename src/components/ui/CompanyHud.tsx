@@ -9,7 +9,7 @@ import { FormIcon, QrIcon } from '@/components/ui/icons';
 import { QrDialog } from '@/components/ui/QrDialog';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
 import { useWheel } from '@/context/WheelContext';
-import { COMPANIES, COMPANY_COUNT, getLogoPath } from '@/data/companies';
+import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
 import {
   HINT_FADE_DURATION,
@@ -105,15 +105,6 @@ export function CompanyHud() {
   return (
     <>
       <div ref={rootRef} className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end">
-        {/* Oversized mark of the focused company, barely there. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={company.slug}
-          src={getLogoPath(company.slug)}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-[12%] -top-[8%] w-[52%] max-w-lg object-contain opacity-[0.045]"
-        />
 
         {/* On a very short screen (a phone on its side) the chrome tightens up so it
             never grows into the space the logo needs. */}

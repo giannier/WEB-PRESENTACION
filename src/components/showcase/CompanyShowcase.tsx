@@ -55,8 +55,6 @@ export function CompanyShowcase() {
     >
       <div className="showcase-media absolute inset-0 overflow-hidden bg-neutral-950">
         <ShowcaseMedia company={company} color={color} />
-        {/* Legibility wash: the artwork is unknown, the text on top of it is not. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/25" />
       </div>
 
       <div className="relative flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
