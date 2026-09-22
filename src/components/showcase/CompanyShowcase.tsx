@@ -195,41 +195,38 @@ export function CompanyShowcase() {
  * shape on a transparent ground) recoloured through `mask-image`: the shape's alpha
  * channel decides what is visible, and `background-color` decides the colour, so one
  * shared asset renders in any of the nineteen brand colours without shipping nineteen
- * separate images. The source file is cropped tight to its own ink, but a hand-painted
- * stroke still fades out at its torn top and bottom edge rather than stopping cleanly —
- * fine for a short, two-line block, but on a five-line headline (corporacionyanayacu,
- * somostributa) that natural fade landed right on the first and last line of text.
+ * separate images. `mask-size: 100% 100%` stretches it to exactly fill whatever box it
+ * is given.
  *
- * Four copies fix it: one anchored to the top of the box and one to the bottom, each a
- * bit more than half the height so they overlap through the middle, plus a smaller one
- * anchored to each of those same edges — reinforcing the exact strip along the very top
- * and very bottom, which is still that wider copy's own faded tip even once anchored
- * there. Whichever line of text sits near an edge is covered by a layer's solid core
- * rather than its fade; the overlaps read as extra brush passes, which is the "add one
- * more above and one more below" look real layered watercolour has anyway. Shared by
- * both the header chip and the headline block — and by every one of the nineteen
- * companies, since none of them render their own copy of this component.
+ * Earlier versions of this asset were cropped only to their outer ink boundary, which
+ * still left a torn, semi-transparent fade along the top and bottom few percent. Trying
+ * to patch that by stacking several copies at different sizes/anchors made it worse, not
+ * better: anchoring a small reinforcement copy "to the bottom" places THAT copy's own
+ * faded tip — not its solid core — right at the container's true bottom edge, so no
+ * amount of stacking ever reached full coverage (confirmed on Rekuperat: the subtitle
+ * kept sitting on bare photo below the stroke). The real fix was upstream: crop the
+ * source file down to the inner band that is consistently 85%+ opaque top to bottom
+ * (measured with raw alpha data), discarding the fade entirely. With a source that has
+ * no weak edge left to expose, a single stretched layer reaches every edge reliably,
+ * for any box height.
  */
 function BrushStroke({ color }: { readonly color: string }) {
-  const layer = (verticalAnchor: 'top' | 'bottom', heightPercent: number): React.CSSProperties => ({
-    backgroundColor: color,
-    maskImage: 'url(/texturas/pincelada.png)',
-    maskSize: `100% ${heightPercent}%`,
-    maskRepeat: 'no-repeat',
-    maskPosition: `center ${verticalAnchor}`,
-    WebkitMaskImage: 'url(/texturas/pincelada.png)',
-    WebkitMaskSize: `100% ${heightPercent}%`,
-    WebkitMaskRepeat: 'no-repeat',
-    WebkitMaskPosition: `center ${verticalAnchor}`,
-  });
-
   return (
-    <>
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top', 62)} />
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom', 62)} />
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top', 35)} />
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom', 35)} />
-    </>
+    <span
+      aria-hidden="true"
+      className="absolute inset-0 -z-10"
+      style={{
+        backgroundColor: color,
+        maskImage: 'url(/texturas/pincelada.png)',
+        maskSize: '100% 100%',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskImage: 'url(/texturas/pincelada.png)',
+        WebkitMaskSize: '100% 100%',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+      }}
+    />
   );
 }
 
