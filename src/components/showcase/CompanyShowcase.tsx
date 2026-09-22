@@ -203,34 +203,31 @@ export function CompanyShowcase() {
 /**
  * Painted brush-stroke background, filling whatever box its parent gives it.
  *
- * Hand-drawn once as an SVG path rather than a photo: it needs to recolour to any of the
- * nineteen brand colours and to stretch to fit text of very different lengths, neither of
- * which a raster texture can do without either shipping nineteen images or losing the
- * authentic torn-edge shape to a uniform tint. `preserveAspectRatio="none"` is what lets
- * the same path fill a short, wide box or a taller, narrower one without keeping its own
- * proportions — the two small satellite streaks are what read as "brush", not a flat blob.
- *
- * A real photographed watercolour texture would look more convincingly painted than a
- * vector path ever will; see the prompt provided alongside this change to try that
- * version instead.
+ * A real photographed watercolour texture (`public/texturas/pincelada.png`, a white
+ * shape on a transparent ground) recoloured through `mask-image`: the shape's alpha
+ * channel decides what is visible, and `background-color` decides the colour, so one
+ * shared asset renders in any of the nineteen brand colours without shipping nineteen
+ * separate images. `mask-size: 100% 100%` stretches it to exactly fill a short, wide
+ * header chip or a taller, narrower headline box, the same way the earlier hand-drawn
+ * SVG path did with `preserveAspectRatio="none"`.
  */
 function BrushStroke({ color }: { readonly color: string }) {
   return (
-    <svg
-      viewBox="0 0 400 120"
-      preserveAspectRatio="none"
+    <span
       aria-hidden="true"
-      className="absolute inset-0 -z-10 h-full w-full"
-    >
-      <path
-        d="M10,54 C16,28 42,10 88,16 C124,21 148,4 192,13 C232,21 268,2 312,15 C352,26 390,32 393,58
-           C396,82 368,90 324,84 C286,79 252,96 208,89 C168,82 132,98 92,90 C56,83 22,76 12,58
-           C9,57 8,55 10,54 Z"
-        fill={color}
-      />
-      <ellipse cx="58" cy="9" rx="32" ry="7" fill={color} opacity="0.85" transform="rotate(-8 58 9)" />
-      <ellipse cx="342" cy="107" rx="28" ry="6.5" fill={color} opacity="0.8" transform="rotate(6 342 107)" />
-    </svg>
+      className="absolute inset-0 -z-10"
+      style={{
+        backgroundColor: color,
+        maskImage: 'url(/texturas/pincelada.png)',
+        maskSize: '100% 100%',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskImage: 'url(/texturas/pincelada.png)',
+        WebkitMaskSize: '100% 100%',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+      }}
+    />
   );
 }
 
