@@ -1,7 +1,7 @@
 'use client';
 
 import gsap from 'gsap';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 import { ShowcaseMedia } from '@/components/showcase/ShowcaseMedia';
 import { GlobeIcon, MailIcon, PhoneIcon } from '@/components/ui/icons';
@@ -10,7 +10,6 @@ import { COMPANIES } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
 import { profileFor } from '@/data/companyProfiles';
 import { SHOWCASE_SWAP_DURATION, SHOWCASE_SWAP_OFFSET_X } from '@/lib/constants';
-import { readableTextColor } from '@/lib/color';
 
 /**
  * Left panel: reference artwork for the focused company, its headline and its contacts.
@@ -45,10 +44,6 @@ export function CompanyShowcase() {
   if (company === undefined) return null;
 
   const color = companyColor(company.slug);
-  // The brand palette spans light and dark alike (Escuela Capacita's gold next to
-  // Convive 360's near-black blue) — a fixed white would go unreadable on the light
-  // end, exactly the problem this whole background is meant to solve.
-  const textColor = readableTextColor(color);
   const profile = profileFor(company.slug);
   const websiteHost = new URL(company.url).host.replace(/^www\./, '');
 
@@ -60,37 +55,33 @@ export function CompanyShowcase() {
     >
       <div className="showcase-media absolute inset-0 overflow-hidden bg-neutral-950">
         <ShowcaseMedia company={company} color={color} />
+        {/*
+          Protective vignette: dark near the top and bottom, clear through the middle so
+          the photo still reads. Kept as a base layer under the highlighter marks below —
+          it is what still protects the coloured accent word, which deliberately gets no
+          marker of its own.
+        */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.72) 100%)',
+          }}
+        />
       </div>
 
       <div className="relative flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
-        {/*
-          Trial run: a solid chip in the company's own brand colour behind every piece of
-          text above the divider line, instead of relying on a gradient wash over an
-          unknown photo. `self-start` keeps the chip hugging the text instead of
-          stretching to the panel's full width.
-        */}
-        <header
-          className="inline-block self-start rounded-lg px-3 py-2"
-          style={{ backgroundColor: color }}
-        >
-          <p
-            className="text-[0.62rem] font-semibold uppercase tracking-[0.42em] sm:text-[0.68rem]"
-            style={{ color: textColor }}
-          >
-            Grupo Corporativo
+        <header>
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.42em] sm:text-[0.68rem]">
+            <Marker color={color}>Grupo Corporativo</Marker>
           </p>
           {/* Boilerplate repeated identically on all nineteen cards — worth the room on
               a tall landscape column, not worth it on a cramped phone screen. */}
-          <p
-            className="mt-1 hidden text-[0.68rem] font-light tracking-wide sm:block"
-            style={{ color: textColor, opacity: 0.75 }}
-          >
-            Diecinueve empresas, un solo ecosistema
+          <p className="mt-1.5 hidden text-[0.68rem] font-light tracking-wide sm:block">
+            <Marker color={color}>Diecinueve empresas, un solo ecosistema</Marker>
           </p>
-          <span
-            className="mt-2 block h-[3px] w-14 rounded-full sm:mt-3"
-            style={{ backgroundColor: textColor }}
-          />
+          <span className="mt-2 block h-[3px] w-14 rounded-full sm:mt-3" style={{ backgroundColor: color }} />
         </header>
 
         {/*
@@ -102,87 +93,103 @@ export function CompanyShowcase() {
           of only some of them getting that by accident of their own word count.
         */}
         <div ref={contentRef} className="max-w-md">
-          <div
-            className="inline-block rounded-lg px-3 py-2.5 sm:px-4 sm:py-3"
-            style={{ backgroundColor: color }}
-          >
-            <h2
-              className="text-balance text-2xl font-bold leading-[1.15] sm:text-3xl lg:text-[2.6rem]"
-              style={{ color: textColor }}
-            >
-              {profile.lead !== '' && (
-                <span className="block font-light">{profile.lead}</span>
-              )}
-              {/* Coloured-word emphasis does not survive sitting on its own colour, so
-                  weight carries it instead: lead is light, highlight and tail are the
-                  same bold the rest of the headline already is. */}
-              {profile.highlight !== '' && <span className="block">{profile.highlight}</span>}
-              {profile.tail !== '' && <span className="block">{profile.tail}</span>}
-            </h2>
-
-            {profile.subtitle !== '' && (
-              // Clamped as a safety net, not a routine limit — every subtitle on file
-              // already fits on one or two lines; this only guards a future long one.
-              <p
-                className="mt-2 line-clamp-2 text-sm sm:mt-3 sm:text-base"
-                style={{ color: textColor, opacity: 0.85 }}
-              >
-                {profile.subtitle}
-              </p>
+          <h2 className="text-balance text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem]">
+            {profile.lead !== '' && (
+              <span className="block">
+                <Marker color={color} className="font-light">
+                  {profile.lead}
+                </Marker>
+              </span>
             )}
-          </div>
+            {/*
+              The accent word is already rendered in the brand colour, and a saturated
+              colour sitting directly on the photo already reads on its own — a marker
+              behind it would fight its own colour instead of setting it apart. Every
+              other line here is plain white, which is exactly what disappears on a
+              bright photo without one.
+            */}
+            {profile.highlight !== '' && (
+              <span className="block" style={{ color }}>
+                {profile.highlight}
+              </span>
+            )}
+            {profile.tail !== '' && (
+              <span className="block">
+                <Marker color={color}>{profile.tail}</Marker>
+              </span>
+            )}
+          </h2>
+
+          {profile.subtitle !== '' && (
+            // Clamped as a safety net, not a routine limit — every subtitle on file
+            // already fits on one or two lines; this only guards a future long one.
+            <p className="mt-2.5 line-clamp-2 text-sm leading-[1.45] sm:mt-3.5 sm:text-base">
+              <Marker color={color}>{profile.subtitle}</Marker>
+            </p>
+          )}
 
           <div className="mt-3 h-px w-full bg-white/20 sm:mt-5" />
 
           {/*
-            Dark gradient strictly below the divider — transparent right at its own top
-            edge so it never bleeds upward past the line, solid by the bottom where the
-            contact text sits. Everything above the divider gets the brand-colour chips
-            instead; this is the other half of that split, not a leftover of the old
-            all-over wash.
+            One contact per row, always — not a wrapping chip row that happened to break
+            nicely for a company with a long email and ran as one long line for a company
+            with a short one. A fixed vertical list looks identically organised for every
+            company regardless of how long its phone, email or domain are.
           */}
-          <div
-            className="rounded-b-xl pb-1 pt-4"
-            style={{
-              backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.78) 65%)',
-            }}
-          >
-            {/*
-              One contact per row, always — not a wrapping chip row that happened to
-              break nicely for a company with a long email and ran as one long line for
-              a company with a short one. A fixed vertical list looks identically
-              organised for every company regardless of how long its phone, email or
-              domain are.
-            */}
-            <ul className="flex flex-col items-start gap-2 text-[0.72rem] text-white/90 sm:gap-2.5 sm:text-xs">
-              {profile.phone !== '' && (
-                <ContactItem
-                  href={`tel:${profile.phone.replace(/\s/g, '')}`}
-                  color={color}
-                  icon={<PhoneIcon className="h-3 w-3" />}
-                  label={`Cel. ${profile.phone}`}
-                />
-              )}
-              {profile.email !== '' && (
-                <ContactItem
-                  href={`mailto:${profile.email}`}
-                  color={color}
-                  icon={<MailIcon className="h-3 w-3" />}
-                  label={profile.email}
-                />
-              )}
+          <ul className="mt-3 flex flex-col items-start gap-2 text-[0.72rem] text-white/85 sm:mt-4 sm:gap-2.5 sm:text-xs">
+            {profile.phone !== '' && (
               <ContactItem
-                href={company.url}
+                href={`tel:${profile.phone.replace(/\s/g, '')}`}
                 color={color}
-                external
-                icon={<GlobeIcon className="h-3 w-3" />}
-                label={websiteHost}
+                icon={<PhoneIcon className="h-3 w-3" />}
+                label={`Cel. ${profile.phone}`}
               />
-            </ul>
-          </div>
+            )}
+            {profile.email !== '' && (
+              <ContactItem
+                href={`mailto:${profile.email}`}
+                color={color}
+                icon={<MailIcon className="h-3 w-3" />}
+                label={profile.email}
+              />
+            )}
+            <ContactItem
+              href={company.url}
+              color={color}
+              external
+              icon={<GlobeIcon className="h-3 w-3" />}
+              label={websiteHost}
+            />
+          </ul>
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Highlighter mark: a solid background hugging one run of text, in the company's own
+ * colour. `display: inline` plus `box-decoration-break: clone` is what makes this follow
+ * text that wraps onto two lines — each visual line gets its own independent block of
+ * colour with its own rounded corners, exactly like a marker stroked one line at a time,
+ * rather than a single rectangle stretched to the widest line.
+ */
+function Marker({
+  color,
+  className = '',
+  children,
+}: {
+  readonly color: string;
+  readonly className?: string;
+  readonly children: ReactNode;
+}) {
+  return (
+    <span
+      className={`inline box-decoration-clone rounded-[3px] px-1.5 py-0.5 text-white ${className}`}
+      style={{ backgroundColor: color }}
+    >
+      {children}
+    </span>
   );
 }
 
