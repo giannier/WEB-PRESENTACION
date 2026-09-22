@@ -85,7 +85,15 @@ export function CompanyShowcase() {
           <span className="mt-2 block h-[3px] w-14 rounded-full sm:mt-3" style={{ backgroundColor: color }} />
         </header>
 
-        <div ref={contentRef} className="max-w-xl">
+        {/*
+          One consistent width for the headline, subtitle and contacts — previously the
+          headline alone stretched to max-w-xl while everything below it was capped at
+          max-w-md, so a long lead/highlight/tail ran as one wide line on a company whose
+          copy happened to be long, while a shorter company's headline broke tidily. A
+          narrower, shared cap makes every company's copy wrap into short lines instead
+          of only some of them getting that by accident of their own word count.
+        */}
+        <div ref={contentRef} className="max-w-md">
           <h2 className="text-balance text-2xl font-bold leading-[1.15] text-white sm:text-3xl lg:text-[2.6rem]">
             {profile.lead !== '' && (
               <span className="block font-light">{profile.lead}</span>
@@ -101,14 +109,20 @@ export function CompanyShowcase() {
           {profile.subtitle !== '' && (
             // Clamped as a safety net, not a routine limit — every subtitle on file
             // already fits on one or two lines; this only guards a future long one.
-            <p className="mt-2 line-clamp-2 max-w-md text-sm text-white/80 sm:mt-3 sm:text-base">
+            <p className="mt-2 line-clamp-2 text-sm text-white/80 sm:mt-3 sm:text-base">
               {profile.subtitle}
             </p>
           )}
 
-          <div className="mt-3 h-px w-full max-w-md bg-white/20 sm:mt-5" />
+          <div className="mt-3 h-px w-full bg-white/20 sm:mt-5" />
 
-          <ul className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2.5 text-[0.72rem] text-white/85 sm:mt-4 sm:text-xs">
+          {/*
+            One contact per row, always — not a wrapping chip row that happened to break
+            nicely for a company with a long email and ran as one long line for a company
+            with a short one. A fixed vertical list looks identically organised for every
+            company regardless of how long its phone, email or domain are.
+          */}
+          <ul className="mt-3 flex flex-col items-start gap-2 text-[0.72rem] text-white/85 sm:mt-4 sm:gap-2.5 sm:text-xs">
             {profile.phone !== '' && (
               <ContactItem
                 href={`tel:${profile.phone.replace(/\s/g, '')}`}
