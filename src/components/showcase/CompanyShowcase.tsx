@@ -103,44 +103,34 @@ export function CompanyShowcase() {
         */}
         <div ref={contentRef} className="max-w-md">
           {/*
-            Two brush strokes, not one per line: everything before the accent word, and
-            everything after it together with the subtitle — matching the reference the
-            client sent, where a title and its subtitle share a single painted stroke. The
-            accent word itself sits between them, uncovered: it is already rendered in the
-            brand colour, so a saturated hue sitting directly on the photo already reads on
-            its own, and a stroke in that same colour behind it would erase it rather than
-            set it apart. Splitting the stroke in two is what keeps the accent word in its
-            original reading position instead of pushing it to the end.
+            One stroke under the whole headline block — lead, accent word and tail
+            together with the subtitle — so every line of text above the divider sits on
+            painted colour, the accent word included. It used to be left bare because it
+            was already rendered in the brand colour; now that every line reads in white,
+            leaving it uncovered would mean it was the only line without a background.
           */}
-          {profile.lead !== '' && (
-            <div className="relative inline-block px-4 py-2.5 sm:px-5 sm:py-3">
+          {(profile.lead !== '' || profile.highlight !== '' || profile.tail !== '' || profile.subtitle !== '') && (
+            <div className="relative px-4 py-2.5 sm:px-5 sm:py-3">
               <BrushStroke color={color} />
-              <p
-                className="relative text-balance text-2xl font-light leading-[1.3] sm:text-3xl lg:text-[2.6rem]"
-                style={{ color: textColor }}
-              >
-                {profile.lead}
-              </p>
-            </div>
-          )}
-
-          {profile.highlight !== '' && (
-            <p
-              className={`text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem] ${profile.lead !== '' ? 'mt-1' : ''}`}
-              style={{ color }}
-            >
-              {profile.highlight}
-            </p>
-          )}
-
-          {(profile.tail !== '' || profile.subtitle !== '') && (
-            <div
-              className={`relative px-4 py-2.5 sm:px-5 sm:py-3 ${profile.highlight !== '' || profile.lead !== '' ? 'mt-1' : ''}`}
-            >
-              <BrushStroke color={color} />
+              {profile.lead !== '' && (
+                <p
+                  className="relative text-balance text-2xl font-light leading-[1.3] sm:text-3xl lg:text-[2.6rem]"
+                  style={{ color: textColor }}
+                >
+                  {profile.lead}
+                </p>
+              )}
+              {profile.highlight !== '' && (
+                <p
+                  className={`relative text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem] ${profile.lead !== '' ? 'mt-1' : ''}`}
+                  style={{ color: textColor }}
+                >
+                  {profile.highlight}
+                </p>
+              )}
               {profile.tail !== '' && (
                 <p
-                  className="relative text-balance text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem]"
+                  className={`relative text-balance text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem] ${profile.highlight !== '' || profile.lead !== '' ? 'mt-1' : ''}`}
                   style={{ color: textColor }}
                 >
                   {profile.tail}
@@ -150,7 +140,7 @@ export function CompanyShowcase() {
                 // Clamped as a safety net, not a routine limit — every subtitle on file
                 // already fits on one or two lines; this only guards a future long one.
                 <p
-                  className={`relative line-clamp-2 text-sm sm:text-base ${profile.tail !== '' ? 'mt-2 sm:mt-3' : ''}`}
+                  className={`relative line-clamp-2 text-sm sm:text-base ${profile.tail !== '' || profile.highlight !== '' || profile.lead !== '' ? 'mt-2 sm:mt-3' : ''}`}
                   style={{ color: textColor, opacity: 0.85 }}
                 >
                   {profile.subtitle}
