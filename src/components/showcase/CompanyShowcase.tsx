@@ -213,8 +213,8 @@ export function CompanyShowcase() {
  * edges never grow, the middle always fully covers whatever grows between them.
  */
 function BrushStroke({ color }: { readonly color: string }) {
-  const EDGE_HEIGHT = 20;
-  const MIDDLE_INSET = 12;
+  const EDGE_HEIGHT = 44;
+  const MIDDLE_INSET = 26;
 
   const maskLayer = (src: string): React.CSSProperties => ({
     backgroundColor: color,
