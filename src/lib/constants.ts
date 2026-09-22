@@ -53,13 +53,22 @@ export const CAMERA_MAX_DISTANCE = 16;
 /*
  * Only one company is ever on screen, so the framing no longer has to leave room for
  * neighbours: both margins are as tight as the chrome allows. The logo lands at
- * `1 / MARGIN` of the panel — 85% of the width, or 62% of the height, whichever binds
+ * `1 / MARGIN` of the panel — 95% of the width, or 62% of the height, whichever binds
  * first. The canvas itself stops above the buttons (see `SceneCanvas`), so this is 62%
  * of the free space rather than of the whole panel.
+ *
+ * WIDTH_MARGIN is kept close to 1 (barely any margin) rather than the more generous
+ * value an earlier pass used. A single perspective distance cannot hit an independent
+ * width target AND an independent height target at once unless the panel's own aspect
+ * happens to match the logo's — on any panel narrower than that (a portrait phone, but
+ * also an unmaximised desktop window close to square) width binds, and a wide margin
+ * there was shrinking the logo well below its 62%-of-height target, leaving a visibly
+ * empty band underneath it. This is as tight as the margin can go before the logo risks
+ * touching the panel's side edges.
  */
 
 /** Governs narrow (portrait) screens. */
-export const CAMERA_WIDTH_MARGIN = 1.18;
+export const CAMERA_WIDTH_MARGIN = 1.05;
 /** Governs wide (landscape) screens. */
 export const CAMERA_HEIGHT_MARGIN = 1.61;
 

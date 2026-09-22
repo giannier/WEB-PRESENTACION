@@ -94,7 +94,7 @@ Everything lives in `src/lib/constants.ts`. The ones you are most likely to touc
 | --- | --- | --- |
 | `RADIUS` | `11` | Cylinder radius; must keep neighbouring logos apart |
 | `LOGO_SIZE` | `3.4` | Square box each logo is fitted into |
-| `CAMERA_WIDTH_MARGIN` | `1.18` | Framing on portrait screens (logo ~85% of width) |
+| `CAMERA_WIDTH_MARGIN` | `1.05` | Framing when width binds — portrait phones, and any landscape window close to square (logo ~95% of width) |
 | `CAMERA_HEIGHT_MARGIN` | `1.61` | Framing on landscape screens (logo ~62% of the free height) |
 | `FOCUS_INNER` / `FOCUS_OUTER` | `0.012` / `0.092` | Where a logo starts and finishes fading; outer must stay under `1/19` |
 | `FOCUS_SCALE_FAR` / `FOCUS_OPACITY_FAR` | `0.88` / `0` | Size and opacity of every logo that is not in focus |
