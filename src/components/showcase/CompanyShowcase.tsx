@@ -200,29 +200,33 @@ export function CompanyShowcase() {
  * fine for a short, two-line block, but on a five-line headline (corporacionyanayacu,
  * somostributa) that natural fade landed right on the first and last line of text.
  *
- * Two copies fix it: one anchored to the top of the box, one to the bottom, each sized
- * to a bit more than half the height so they overlap through the middle. Whichever line
- * of text sits near an edge is covered by that copy's solid core rather than its fade;
- * the overlap in the middle reads as a second, slightly heavier brush pass, which is the
- * "add a stroke above and below" look real layered watercolour has anyway.
+ * Three copies fix it: one anchored to the top of the box, one to the bottom at a bit
+ * more than half the height so the two overlap through the middle, and a third, smaller
+ * one anchored to the bottom on top of that — reinforcing the exact strip along the very
+ * bottom edge, which is still that copy's own faded tip even once it is anchored there.
+ * Whichever line of text sits near an edge is covered by a layer's solid core rather than
+ * its fade; the overlaps read as extra brush passes, which is the "add a stroke above and
+ * below" look real layered watercolour has anyway. Shared by both the header chip and the
+ * headline block, so both get the same reinforced coverage.
  */
 function BrushStroke({ color }: { readonly color: string }) {
-  const layer = (verticalAnchor: 'top' | 'bottom'): React.CSSProperties => ({
+  const layer = (verticalAnchor: 'top' | 'bottom', heightPercent: number): React.CSSProperties => ({
     backgroundColor: color,
     maskImage: 'url(/texturas/pincelada.png)',
-    maskSize: '100% 62%',
+    maskSize: `100% ${heightPercent}%`,
     maskRepeat: 'no-repeat',
     maskPosition: `center ${verticalAnchor}`,
     WebkitMaskImage: 'url(/texturas/pincelada.png)',
-    WebkitMaskSize: '100% 62%',
+    WebkitMaskSize: `100% ${heightPercent}%`,
     WebkitMaskRepeat: 'no-repeat',
     WebkitMaskPosition: `center ${verticalAnchor}`,
   });
 
   return (
     <>
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top')} />
-      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom')} />
+      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top', 62)} />
+      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom', 62)} />
+      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom', 35)} />
     </>
   );
 }
