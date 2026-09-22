@@ -10,7 +10,6 @@ import { COMPANIES } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
 import { profileFor } from '@/data/companyProfiles';
 import { SHOWCASE_SWAP_DURATION, SHOWCASE_SWAP_OFFSET_X } from '@/lib/constants';
-import { readableTextColor } from '@/lib/color';
 
 /**
  * Left panel: reference artwork for the focused company, its headline and its contacts.
@@ -45,10 +44,9 @@ export function CompanyShowcase() {
   if (company === undefined) return null;
 
   const color = companyColor(company.slug);
-  // The brand palette spans light and dark alike (Escuela Capacita's gold next to
-  // Convive 360's near-black blue) — a fixed white would go unreadable on the light
-  // end, exactly the problem this background is meant to solve.
-  const textColor = readableTextColor(color);
+  // Inverted from the earlier WCAG-picked ink/white choice: the client wants every
+  // painted stroke to carry white text regardless of how light the brand colour is.
+  const textColor = '#ffffff';
   const profile = profileFor(company.slug);
   const websiteHost = new URL(company.url).host.replace(/^www\./, '');
 
