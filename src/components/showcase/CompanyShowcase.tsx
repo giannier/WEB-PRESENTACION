@@ -191,42 +191,61 @@ export function CompanyShowcase() {
 /**
  * Painted brush-stroke background, filling whatever box its parent gives it.
  *
- * A real photographed watercolour texture (`public/texturas/pincelada.png`, a white
- * shape on a transparent ground) recoloured through `mask-image`: the shape's alpha
- * channel decides what is visible, and `background-color` decides the colour, so one
- * shared asset renders in any of the nineteen brand colours without shipping nineteen
- * separate images. `mask-size: 100% 100%` stretches it to exactly fill whatever box it
- * is given.
+ * Three masked layers, sliced from the same photographed watercolour texture and
+ * recoloured through `mask-image` (the shape's alpha decides what shows, the brand
+ * colour is the actual paint, so one shared set of assets works for all nineteen
+ * companies without shipping nineteen coloured images):
  *
- * Earlier versions of this asset were cropped only to their outer ink boundary, which
- * still left a torn, semi-transparent fade along the top and bottom few percent. Trying
- * to patch that by stacking several copies at different sizes/anchors made it worse, not
- * better: anchoring a small reinforcement copy "to the bottom" places THAT copy's own
- * faded tip — not its solid core — right at the container's true bottom edge, so no
- * amount of stacking ever reached full coverage (confirmed on Rekuperat: the subtitle
- * kept sitting on bare photo below the stroke). The real fix was upstream: crop the
- * source file down to the inner band that is consistently 85%+ opaque top to bottom
- * (measured with raw alpha data), discarding the fade entirely. With a source that has
- * no weak edge left to expose, a single stretched layer reaches every edge reliably,
- * for any box height.
+ *   - `pincelada-borde-superior.png` / `-inferior.png`, the genuinely torn top and
+ *     bottom edge of the original brush stroke, each pinned to a FIXED pixel height at
+ *     its own edge of the box — this is what still reads as a hand-painted stroke rather
+ *     than a rounded rectangle, however tall the box grows.
+ *   - `pincelada.png`, cropped down to the inner band that stays 85%+ opaque top to
+ *     bottom (no fade left to expose), inset by a fixed amount from each edge and
+ *     stretched to fill everything in between.
+ *
+ * A single mask stretched to 100% of the box (an earlier version of this component) had
+ * to choose between the two: crop tight to the torn edges and a tall block's first/last
+ * line lands on the fade (the original bug); crop tight to the solid core instead and
+ * the torn-edge look disappears, so it reads as a flat block instead of a brush stroke
+ * (what the client flagged next). Splitting fixed-height edges from a stretchy solid
+ * middle is what lets both be true regardless of how many lines the box holds — the
+ * edges never grow, the middle always fully covers whatever grows between them.
  */
 function BrushStroke({ color }: { readonly color: string }) {
+  const EDGE_HEIGHT = 20;
+  const MIDDLE_INSET = 12;
+
+  const maskLayer = (src: string): React.CSSProperties => ({
+    backgroundColor: color,
+    maskImage: `url(${src})`,
+    maskSize: '100% 100%',
+    maskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskImage: `url(${src})`,
+    WebkitMaskSize: '100% 100%',
+    WebkitMaskRepeat: 'no-repeat',
+    WebkitMaskPosition: 'center',
+  });
+
   return (
-    <span
-      aria-hidden="true"
-      className="absolute inset-0 -z-10"
-      style={{
-        backgroundColor: color,
-        maskImage: 'url(/texturas/pincelada.png)',
-        maskSize: '100% 100%',
-        maskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskImage: 'url(/texturas/pincelada.png)',
-        WebkitMaskSize: '100% 100%',
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskPosition: 'center',
-      }}
-    />
+    <>
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 -z-10"
+        style={{ height: EDGE_HEIGHT, ...maskLayer('/texturas/pincelada-borde-superior.png') }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 -z-10"
+        style={{ height: EDGE_HEIGHT, ...maskLayer('/texturas/pincelada-borde-inferior.png') }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 -z-10"
+        style={{ top: MIDDLE_INSET, bottom: MIDDLE_INSET, ...maskLayer('/texturas/pincelada.png') }}
+      />
+    </>
   );
 }
 
