@@ -16,8 +16,6 @@ import {
   HUD_DIM_DURATION,
   HUD_DIM_OPACITY,
   HUD_RESTORE_DURATION,
-  HUD_SWAP_DURATION,
-  HUD_SWAP_OFFSET_Y,
 } from '@/lib/constants';
 
 type OpenDialog = 'qr' | 'form' | null;
@@ -39,29 +37,10 @@ export function CompanyHud() {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<HTMLParagraphElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
 
   const company = COMPANIES[activeIndex];
   const closeDialog = useCallback(() => setOpenDialog(null), []);
-
-  // Swap animation on the active company name.
-  useEffect(() => {
-    const element = nameRef.current;
-    if (element === null) return;
-
-    const tween = gsap.fromTo(
-      element,
-      { opacity: 0, y: HUD_SWAP_OFFSET_Y },
-      { opacity: 1, y: 0, duration: HUD_SWAP_DURATION, ease: 'power2.out', overwrite: true },
-    );
-
-    // Strict Mode double-invokes this effect; killing the previous tween keeps a
-    // single source of truth for the element's transform.
-    return () => {
-      tween.kill();
-    };
-  }, [activeIndex]);
 
   // The swipe hint retires permanently after the first interaction.
   useEffect(() => {
@@ -118,15 +97,17 @@ export function CompanyHud() {
               Desliza para explorar
             </p>
 
-            <p
-              ref={nameRef}
-              aria-live="polite"
-              className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[1.75rem] [@media(max-height:450px)]:text-lg"
-            >
+            {/*
+              The 3D logo directly above already says the company's name — repeating it
+              here as text was pure redundancy. Kept for screen readers only: the visual
+              identity a sighted visitor gets from the mark and the showcase panel has no
+              equivalent for someone who cannot see it.
+            */}
+            <p aria-live="polite" className="sr-only">
               {company.name}
             </p>
 
-            <div className="mt-2.5 flex items-center gap-3 [@media(max-height:450px)]:mt-1">
+            <div className="flex items-center gap-3">
               <span className="h-[2px] w-10 rounded-full" style={{ backgroundColor: color }} />
               <span className="text-[0.65rem] tracking-[0.3em] text-neutral-400">
                 {String(activeIndex + 1).padStart(2, '0')} / {COMPANY_COUNT}

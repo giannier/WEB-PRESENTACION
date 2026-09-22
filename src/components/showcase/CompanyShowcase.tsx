@@ -77,10 +77,12 @@ export function CompanyShowcase() {
           <p className="text-[0.62rem] font-semibold uppercase tracking-[0.42em] text-white sm:text-[0.68rem]">
             Grupo Corporativo
           </p>
-          <p className="mt-1 text-[0.68rem] font-light tracking-wide text-white/70">
+          {/* Boilerplate repeated identically on all nineteen cards — worth the room on
+              a tall landscape column, not worth it on a cramped phone screen. */}
+          <p className="mt-1 hidden text-[0.68rem] font-light tracking-wide text-white/70 sm:block">
             Diecinueve empresas, un solo ecosistema
           </p>
-          <span className="mt-3 block h-[3px] w-14 rounded-full" style={{ backgroundColor: color }} />
+          <span className="mt-2 block h-[3px] w-14 rounded-full sm:mt-3" style={{ backgroundColor: color }} />
         </header>
 
         <div ref={contentRef} className="max-w-xl">
@@ -97,12 +99,16 @@ export function CompanyShowcase() {
           </h2>
 
           {profile.subtitle !== '' && (
-            <p className="mt-3 max-w-md text-sm text-white/80 sm:text-base">{profile.subtitle}</p>
+            // Clamped as a safety net, not a routine limit — every subtitle on file
+            // already fits on one or two lines; this only guards a future long one.
+            <p className="mt-2 line-clamp-2 max-w-md text-sm text-white/80 sm:mt-3 sm:text-base">
+              {profile.subtitle}
+            </p>
           )}
 
-          <div className="mt-5 h-px w-full max-w-md bg-white/20" />
+          <div className="mt-3 h-px w-full max-w-md bg-white/20 sm:mt-5" />
 
-          <ul className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2.5 text-[0.72rem] text-white/85 sm:text-xs">
+          <ul className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2.5 text-[0.72rem] text-white/85 sm:mt-4 sm:text-xs">
             {profile.phone !== '' && (
               <ContactItem
                 href={`tel:${profile.phone.replace(/\s/g, '')}`}

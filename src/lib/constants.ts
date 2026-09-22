@@ -195,9 +195,6 @@ export const PERF_DPR_FLOOR = 0.75;
  * UI timing
  * ------------------------------------------------------------------ */
 
-export const HUD_SWAP_DURATION = 0.32;
-export const HUD_SWAP_OFFSET_Y = 14;
-
 /** Showcase copy slides in from the side the wheel travels towards. */
 export const SHOWCASE_SWAP_DURATION = 0.45;
 export const SHOWCASE_SWAP_OFFSET_X = -28;
