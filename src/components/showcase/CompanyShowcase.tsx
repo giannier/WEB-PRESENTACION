@@ -198,6 +198,12 @@ export function CompanyShowcase() {
  * separate images. `mask-size: 100% 100%` stretches it to exactly fill a short, wide
  * header chip or a taller, narrower headline box, the same way the earlier hand-drawn
  * SVG path did with `preserveAspectRatio="none"`.
+ *
+ * The source file is cropped tight to the ink itself, not the original generated canvas:
+ * the raw generation had the stroke sitting in the middle of a mostly transparent frame
+ * (only ~56% of its own height was actually painted), so stretching it as-is left the
+ * first and last line of a multi-line block sitting on bare photo. Cropped to the ink's
+ * own bounding box, the stretch now reaches every edge of the box it is given.
  */
 function BrushStroke({ color }: { readonly color: string }) {
   return (
