@@ -81,6 +81,11 @@
   .showcase-panel {
     width: 46%;
     height: 100%;
+    /* The portrait clamp above must not leak in here: `max-height` overrides `height`
+       regardless of viewport, so without this reset the panel was silently capped at
+       52% of the screen instead of filling the full-height column. */
+    min-height: 0;
+    max-height: none;
     clip-path: polygon(0 0, 86% 0, 100% 50%, 86% 100%, 0 100%);
   }
 
