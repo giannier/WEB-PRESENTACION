@@ -195,33 +195,35 @@ export function CompanyShowcase() {
  * shape on a transparent ground) recoloured through `mask-image`: the shape's alpha
  * channel decides what is visible, and `background-color` decides the colour, so one
  * shared asset renders in any of the nineteen brand colours without shipping nineteen
- * separate images. `mask-size: 100% 100%` stretches it to exactly fill a short, wide
- * header chip or a taller, narrower headline box, the same way the earlier hand-drawn
- * SVG path did with `preserveAspectRatio="none"`.
+ * separate images. The source file is cropped tight to its own ink, but a hand-painted
+ * stroke still fades out at its torn top and bottom edge rather than stopping cleanly —
+ * fine for a short, two-line block, but on a five-line headline (corporacionyanayacu,
+ * somostributa) that natural fade landed right on the first and last line of text.
  *
- * The source file is cropped tight to the ink itself, not the original generated canvas:
- * the raw generation had the stroke sitting in the middle of a mostly transparent frame
- * (only ~56% of its own height was actually painted), so stretching it as-is left the
- * first and last line of a multi-line block sitting on bare photo. Cropped to the ink's
- * own bounding box, the stretch now reaches every edge of the box it is given.
+ * Two copies fix it: one anchored to the top of the box, one to the bottom, each sized
+ * to a bit more than half the height so they overlap through the middle. Whichever line
+ * of text sits near an edge is covered by that copy's solid core rather than its fade;
+ * the overlap in the middle reads as a second, slightly heavier brush pass, which is the
+ * "add a stroke above and below" look real layered watercolour has anyway.
  */
 function BrushStroke({ color }: { readonly color: string }) {
+  const layer = (verticalAnchor: 'top' | 'bottom'): React.CSSProperties => ({
+    backgroundColor: color,
+    maskImage: 'url(/texturas/pincelada.png)',
+    maskSize: '100% 62%',
+    maskRepeat: 'no-repeat',
+    maskPosition: `center ${verticalAnchor}`,
+    WebkitMaskImage: 'url(/texturas/pincelada.png)',
+    WebkitMaskSize: '100% 62%',
+    WebkitMaskRepeat: 'no-repeat',
+    WebkitMaskPosition: `center ${verticalAnchor}`,
+  });
+
   return (
-    <span
-      aria-hidden="true"
-      className="absolute inset-0 -z-10"
-      style={{
-        backgroundColor: color,
-        maskImage: 'url(/texturas/pincelada.png)',
-        maskSize: '100% 100%',
-        maskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskImage: 'url(/texturas/pincelada.png)',
-        WebkitMaskSize: '100% 100%',
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskPosition: 'center',
-      }}
-    />
+    <>
+      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top')} />
+      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom')} />
+    </>
   );
 }
 
