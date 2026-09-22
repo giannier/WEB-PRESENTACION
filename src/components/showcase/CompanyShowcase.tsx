@@ -74,11 +74,11 @@ export function CompanyShowcase() {
         />
       </div>
 
-      <div className="relative flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
-        <header className="relative inline-block self-start px-4 py-2.5">
+      <div className="relative flex h-full flex-col justify-between p-4 sm:p-8 lg:p-10">
+        <header className="relative inline-block self-start px-3 py-2 sm:px-4 sm:py-2.5">
           <BrushStroke color={color} />
           <p
-            className="relative text-[0.62rem] font-semibold uppercase tracking-[0.42em] sm:text-[0.68rem]"
+            className="relative text-[0.58rem] font-semibold uppercase tracking-[0.42em] sm:text-[0.68rem]"
             style={{ color: textColor }}
           >
             Grupo Corporativo
@@ -110,11 +110,11 @@ export function CompanyShowcase() {
             leaving it uncovered would mean it was the only line without a background.
           */}
           {(profile.lead !== '' || profile.highlight !== '' || profile.tail !== '' || profile.subtitle !== '') && (
-            <div className="relative px-4 py-2.5 sm:px-5 sm:py-3">
+            <div className="relative px-3 py-2 sm:px-5 sm:py-3">
               <BrushStroke color={color} />
               {profile.lead !== '' && (
                 <p
-                  className="relative text-balance text-2xl font-light leading-[1.3] sm:text-3xl lg:text-[2.6rem]"
+                  className="relative text-balance text-xl font-light leading-[1.25] sm:text-3xl sm:leading-[1.3] lg:text-[2.6rem]"
                   style={{ color: textColor }}
                 >
                   {profile.lead}
@@ -122,7 +122,7 @@ export function CompanyShowcase() {
               )}
               {profile.highlight !== '' && (
                 <p
-                  className={`relative text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem] ${profile.lead !== '' ? 'mt-1' : ''}`}
+                  className={`relative text-xl font-bold leading-[1.25] sm:text-3xl sm:leading-[1.3] lg:text-[2.6rem] ${profile.lead !== '' ? 'mt-1' : ''}`}
                   style={{ color: textColor }}
                 >
                   {profile.highlight}
@@ -130,7 +130,7 @@ export function CompanyShowcase() {
               )}
               {profile.tail !== '' && (
                 <p
-                  className={`relative text-balance text-2xl font-bold leading-[1.3] sm:text-3xl lg:text-[2.6rem] ${profile.highlight !== '' || profile.lead !== '' ? 'mt-1' : ''}`}
+                  className={`relative text-balance text-xl font-bold leading-[1.25] sm:text-3xl sm:leading-[1.3] lg:text-[2.6rem] ${profile.highlight !== '' || profile.lead !== '' ? 'mt-1' : ''}`}
                   style={{ color: textColor }}
                 >
                   {profile.tail}
@@ -140,7 +140,7 @@ export function CompanyShowcase() {
                 // Clamped as a safety net, not a routine limit — every subtitle on file
                 // already fits on one or two lines; this only guards a future long one.
                 <p
-                  className={`relative line-clamp-2 text-sm sm:text-base ${profile.tail !== '' || profile.highlight !== '' || profile.lead !== '' ? 'mt-2 sm:mt-3' : ''}`}
+                  className={`relative line-clamp-2 text-xs sm:text-base ${profile.tail !== '' || profile.highlight !== '' || profile.lead !== '' ? 'mt-1.5 sm:mt-3' : ''}`}
                   style={{ color: textColor, opacity: 0.85 }}
                 >
                   {profile.subtitle}
@@ -149,7 +149,7 @@ export function CompanyShowcase() {
             </div>
           )}
 
-          <div className="mt-3 h-px w-full bg-white/20 sm:mt-5" />
+          <div className="mt-2 h-px w-full bg-white/20 sm:mt-5" />
 
           {/*
             One contact per row, always — not a wrapping chip row that happened to break
@@ -157,7 +157,7 @@ export function CompanyShowcase() {
             with a short one. A fixed vertical list looks identically organised for every
             company regardless of how long its phone, email or domain are.
           */}
-          <ul className="mt-3 flex flex-col items-start gap-2 text-[0.72rem] text-white/85 sm:mt-4 sm:gap-2.5 sm:text-xs">
+          <ul className="mt-2 flex flex-col items-start gap-1.5 text-[0.68rem] text-white/85 sm:mt-4 sm:gap-2.5 sm:text-xs">
             {profile.phone !== '' && (
               <ContactItem
                 href={`tel:${profile.phone.replace(/\s/g, '')}`}
@@ -213,9 +213,6 @@ export function CompanyShowcase() {
  * edges never grow, the middle always fully covers whatever grows between them.
  */
 function BrushStroke({ color }: { readonly color: string }) {
-  const EDGE_HEIGHT = 44;
-  const MIDDLE_INSET = 26;
-
   const maskLayer = (src: string): React.CSSProperties => ({
     backgroundColor: color,
     maskImage: `url(${src})`,
@@ -228,22 +225,27 @@ function BrushStroke({ color }: { readonly color: string }) {
     WebkitMaskPosition: 'center',
   });
 
+  // Sized in Tailwind classes, not a JS constant, because the edge band has to scale
+  // down with the smaller mobile type: at the desktop 44px it read clearly as torn paint,
+  // but on a phone's much shorter, smaller-text boxes that same fixed height would
+  // overflow past the box's own top/bottom (this is an absolutely-positioned overlay, so
+  // nothing clips it) and bleed into whatever sits above or below.
   return (
     <>
       <span
         aria-hidden="true"
-        className="absolute inset-x-0 top-0 -z-10"
-        style={{ height: EDGE_HEIGHT, ...maskLayer('/texturas/pincelada-borde-superior.png') }}
+        className="absolute inset-x-0 top-0 -z-10 h-4 sm:h-11"
+        style={maskLayer('/texturas/pincelada-borde-superior.png')}
       />
       <span
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 -z-10"
-        style={{ height: EDGE_HEIGHT, ...maskLayer('/texturas/pincelada-borde-inferior.png') }}
+        className="absolute inset-x-0 bottom-0 -z-10 h-4 sm:h-11"
+        style={maskLayer('/texturas/pincelada-borde-inferior.png')}
       />
       <span
         aria-hidden="true"
-        className="absolute inset-x-0 -z-10"
-        style={{ top: MIDDLE_INSET, bottom: MIDDLE_INSET, ...maskLayer('/texturas/pincelada.png') }}
+        className="absolute inset-x-0 -z-10 top-[10px] bottom-[10px] sm:top-[26px] sm:bottom-[26px]"
+        style={maskLayer('/texturas/pincelada.png')}
       />
     </>
   );
