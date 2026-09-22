@@ -9,8 +9,11 @@ import { SceneLoader } from '@/components/scene/Loader';
 import { CompanyShowcase } from '@/components/showcase/CompanyShowcase';
 import { CompanyHud } from '@/components/ui/CompanyHud';
 import { CompanyWheel } from '@/components/wheel/CompanyWheel';
+import { fitLogoSize } from '@/components/wheel/logoGeometry';
 import { QualityProvider, useQuality } from '@/context/QualityContext';
 import { WheelProvider, useWheel } from '@/context/WheelContext';
+import { COMPANIES } from '@/data/companies';
+import { logoAspectRatio } from '@/data/logoAspectRatios';
 import { preloadCompanyTextures } from '@/hooks/useCompanyTextures';
 import { useWheelInput } from '@/hooks/useWheelPhysics';
 import {
@@ -42,12 +45,24 @@ preloadCompanyTextures();
  * Solves the camera distance from the live viewport so the front logo is always framed:
  * a 9:16 phone needs far more pull-back than a 16:9 desktop. Also solves the drag
  * sensitivity from the same framing, so the logo under the finger follows the finger.
+ *
+ * Framed against the ACTIVE logo's own rendered size, not the square `LOGO_SIZE`
+ * envelope every logo is fitted into. All nineteen logos are wider than tall — from
+ * 1.2x (ynsumedic) to 3.1x (arbicop) — so a wordmark-style logo only ever occupies a
+ * fraction of that square envelope's height. Framing against the envelope regardless of
+ * a logo's own shape left every one of them short of the intended fill, the widest ones
+ * dramatically so (arbicop rendered at roughly a third of the intended height). Solving
+ * distance from each logo's real width and height — exactly what `<CompanyCard>` scales
+ * its mesh to — makes every company fill the same target fraction of the panel
+ * regardless of how wide its own mark is, and re-runs whenever the focused company
+ * changes, not only on resize.
  */
 function CameraRig() {
   const camera = useThree((state) => state.camera);
   const width = useThree((state) => state.size.width);
   const height = useThree((state) => state.size.height);
-  const { dragSensitivityRef } = useWheel();
+  const { dragSensitivityRef, activeIndex } = useWheel();
+  const logoSlug = COMPANIES[activeIndex]?.slug;
 
   useEffect(() => {
     if (!(camera instanceof THREE.PerspectiveCamera)) return;
@@ -55,10 +70,12 @@ function CameraRig() {
 
     const aspect = width / height;
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-    const halfLogo = LOGO_SIZE * 0.5;
+    const logo = fitLogoSize(logoSlug === undefined ? 1 : logoAspectRatio(logoSlug), LOGO_SIZE);
+    const halfLogoWidth = logo.width * 0.5;
+    const halfLogoHeight = logo.height * 0.5;
 
-    const byHeight = (halfLogo * CAMERA_HEIGHT_MARGIN) / tan;
-    const byWidth = (halfLogo * CAMERA_WIDTH_MARGIN) / (tan * aspect);
+    const byHeight = (halfLogoHeight * CAMERA_HEIGHT_MARGIN) / tan;
+    const byWidth = (halfLogoWidth * CAMERA_WIDTH_MARGIN) / (tan * aspect);
     const distance = clamp(
       Math.max(byWidth, byHeight),
       CAMERA_MIN_DISTANCE,
@@ -74,7 +91,7 @@ function CameraRig() {
     // that logo by `RADIUS * angle` units.
     const pixelsPerUnit = height / (2 * distance * tan);
     dragSensitivityRef.current = DRAG_TRACKING_GAIN / (pixelsPerUnit * RADIUS);
-  }, [camera, width, height, dragSensitivityRef]);
+  }, [camera, width, height, dragSensitivityRef, logoSlug]);
 
   return null;
 }
