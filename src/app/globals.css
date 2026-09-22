@@ -54,7 +54,16 @@
  */
 .showcase-panel {
   width: 100%;
-  height: 36dvh;
+  /*
+   * Height is content-driven, not a fixed fraction of the screen: copy length varies
+   * per company (a three-line headline plus three contact chips needs real room), and a
+   * fixed height silently clipped whatever did not fit — the contact row could vanish
+   * with no visual sign anything was missing. `min-height` keeps short profiles from
+   * looking cramped; `max-height` keeps a long one from starving the wheel of space.
+   */
+  height: auto;
+  min-height: 38dvh;
+  max-height: 64dvh;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 26px), 50% 100%, 0 calc(100% - 26px));
 }
 

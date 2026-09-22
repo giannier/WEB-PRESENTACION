@@ -55,6 +55,21 @@ export function CompanyShowcase() {
     >
       <div className="showcase-media absolute inset-0 overflow-hidden bg-neutral-950">
         <ShowcaseMedia company={company} color={color} />
+        {/*
+          Protective vignette: dark near the top (behind the brand line) and near the
+          bottom (behind the headline and contacts), clear through the middle so the
+          photo still reads. White text sits directly on unknown artwork — without this,
+          a bright cover makes it unreadable; the previous all-over wash protected it too
+          bluntly and muddied every photo, even the dark ones that never needed it.
+        */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.72) 100%)',
+          }}
+        />
       </div>
 
       <div className="relative flex h-full flex-col justify-between p-6 sm:p-8 lg:p-10">
