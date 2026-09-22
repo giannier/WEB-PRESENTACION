@@ -200,14 +200,15 @@ export function CompanyShowcase() {
  * fine for a short, two-line block, but on a five-line headline (corporacionyanayacu,
  * somostributa) that natural fade landed right on the first and last line of text.
  *
- * Three copies fix it: one anchored to the top of the box, one to the bottom at a bit
- * more than half the height so the two overlap through the middle, and a third, smaller
- * one anchored to the bottom on top of that — reinforcing the exact strip along the very
- * bottom edge, which is still that copy's own faded tip even once it is anchored there.
- * Whichever line of text sits near an edge is covered by a layer's solid core rather than
- * its fade; the overlaps read as extra brush passes, which is the "add a stroke above and
- * below" look real layered watercolour has anyway. Shared by both the header chip and the
- * headline block, so both get the same reinforced coverage.
+ * Four copies fix it: one anchored to the top of the box and one to the bottom, each a
+ * bit more than half the height so they overlap through the middle, plus a smaller one
+ * anchored to each of those same edges — reinforcing the exact strip along the very top
+ * and very bottom, which is still that wider copy's own faded tip even once anchored
+ * there. Whichever line of text sits near an edge is covered by a layer's solid core
+ * rather than its fade; the overlaps read as extra brush passes, which is the "add one
+ * more above and one more below" look real layered watercolour has anyway. Shared by
+ * both the header chip and the headline block — and by every one of the nineteen
+ * companies, since none of them render their own copy of this component.
  */
 function BrushStroke({ color }: { readonly color: string }) {
   const layer = (verticalAnchor: 'top' | 'bottom', heightPercent: number): React.CSSProperties => ({
@@ -226,6 +227,7 @@ function BrushStroke({ color }: { readonly color: string }) {
     <>
       <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top', 62)} />
       <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom', 62)} />
+      <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('top', 35)} />
       <span aria-hidden="true" className="absolute inset-0 -z-10" style={layer('bottom', 35)} />
     </>
   );
