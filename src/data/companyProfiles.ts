@@ -171,7 +171,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     email: 'info@parkeatcar.com',
   },
   rekuperat: {
-    lead: 'Infraestructura inteligente para la',
+    lead: '',
     highlight: 'RECUPERACIÓN FINANCIERA',
     tail: 'Y EL COMPLIANCE',
     subtitle: 'Cobranza omnicanal con inteligencia artificial bajo normativa SBS',
