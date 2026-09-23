@@ -114,7 +114,7 @@ export function CompanyShowcase() {
               <BrushStroke color={color} />
               {profile.lead !== '' && (
                 <p
-                  className="relative text-balance text-xl font-light leading-[1.25] sm:text-3xl sm:leading-[1.3] lg:text-[2.6rem]"
+                  className="relative text-balance text-xl font-light leading-[1.25] sm:text-2xl sm:leading-[1.3] lg:text-3xl"
                   style={{ color: textColor }}
                 >
                   {profile.lead}
@@ -122,7 +122,7 @@ export function CompanyShowcase() {
               )}
               {profile.highlight !== '' && (
                 <p
-                  className={`relative text-xl font-bold leading-[1.25] sm:text-3xl sm:leading-[1.3] lg:text-[2.6rem] ${profile.lead !== '' ? 'mt-1' : ''}`}
+                  className={`relative text-xl font-bold leading-[1.25] sm:text-2xl sm:leading-[1.3] lg:text-3xl ${profile.lead !== '' ? 'mt-1' : ''}`}
                   style={{ color: textColor }}
                 >
                   {profile.highlight}
@@ -130,7 +130,7 @@ export function CompanyShowcase() {
               )}
               {profile.tail !== '' && (
                 <p
-                  className={`relative text-balance text-xl font-bold leading-[1.25] sm:text-3xl sm:leading-[1.3] lg:text-[2.6rem] ${profile.highlight !== '' || profile.lead !== '' ? 'mt-1' : ''}`}
+                  className={`relative text-balance text-xl font-bold leading-[1.25] sm:text-2xl sm:leading-[1.3] lg:text-3xl ${profile.highlight !== '' || profile.lead !== '' ? 'mt-1' : ''}`}
                   style={{ color: textColor }}
                 >
                   {profile.tail}
@@ -140,7 +140,7 @@ export function CompanyShowcase() {
                 // Clamped as a safety net, not a routine limit — every subtitle on file
                 // already fits on one or two lines; this only guards a future long one.
                 <p
-                  className={`relative line-clamp-2 text-xs sm:text-base ${profile.tail !== '' || profile.highlight !== '' || profile.lead !== '' ? 'mt-1.5 sm:mt-3' : ''}`}
+                  className={`relative line-clamp-2 text-xs sm:text-sm lg:text-base ${profile.tail !== '' || profile.highlight !== '' || profile.lead !== '' ? 'mt-1.5 sm:mt-3' : ''}`}
                   style={{ color: textColor, opacity: 0.85 }}
                 >
                   {profile.subtitle}

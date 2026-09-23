@@ -77,7 +77,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
   },
   zentek360: {
     lead: 'Software para cada empresa,',
-    highlight: 'EN ÓRBITA',
+    highlight: '',
     tail: '',
     subtitle: 'Sistemas a medida, automatización e inteligencia artificial',
     phone: '+51 964 155 424',
@@ -111,8 +111,8 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
   },
   trustagroexport: {
     lead: 'Impulsamos el campo,',
-    highlight: 'CONECTAMOS',
-    tail: 'AL MUNDO',
+    highlight: '',
+    tail: '',
     subtitle: 'Fertilizantes, maquinaria e insumos para el agro exportador',
     phone: '+51 987 664 321',
     // Published on their site under a different domain than trustagroexport.com.
@@ -136,8 +136,8 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     email: 'info@supply360.com',
   },
   corporacionyanayacu: {
-    lead: 'Conectamos',
-    highlight: 'TALENTO Y RECURSOS,',
+    lead: '',
+    highlight: '',
     tail: 'IMPULSAMOS EL DESARROLLO DE NUESTRO PAÍS',
     subtitle: 'Soluciones integrales para un futuro sostenible',
     // From the corporate artwork rather than the website.
