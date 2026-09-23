@@ -40,7 +40,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'LA CERTIFICACIÓN',
     tail: 'QUE NECESITAS',
     subtitle: 'Formación y certificación profesional para el trabajo real',
-    phone: '+51 967 285 628',
+    phone: '+51 974 667 498',
     email: '',
   },
   arbicop: {
@@ -56,7 +56,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'TU VIDA CRECE',
     tail: '',
     subtitle: 'Asesoramiento integral para tu nueva propiedad',
-    phone: '+51 971 381 476',
+    phone: '+51 967 285 628',
     email: 'ventas@convive360.com',
   },
   aguayanayacu: {
@@ -64,7 +64,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'QUE ENAMORA',
     tail: '',
     subtitle: 'Agua de mesa premium: Essential, Alcalina y Performance',
-    phone: '+51 974 667 498',
+    phone: '+51 943 704 298',
     email: 'info@aguayanayacu.com',
   },
   yanayacuclean: {
@@ -72,7 +72,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'QUE ATRAPAN',
     tail: '',
     subtitle: 'Limpieza de alta concentración para hogar e industria',
-    phone: '+51 974 667 498',
+    phone: '+51 943 704 298',
     email: 'info@yanayacuclean.com',
   },
   zentek360: {
@@ -80,7 +80,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: '',
     tail: '',
     subtitle: 'Sistemas a medida, automatización e inteligencia artificial',
-    phone: '+51 964 155 424',
+    phone: '+51 964 155 242',
     email: 'info@zentek360.com',
   },
   surelife360: {
@@ -88,7 +88,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'EL FUTURO',
     tail: 'DE SU ORGANIZACIÓN',
     subtitle: 'Corredores de seguros: SCTR, Vida Ley, EPS y responsabilidad civil',
-    phone: '+51 986 342 670',
+    phone: '+51 943 704 298',
     email: 'info@surelife360.com',
   },
   agrosumak: {
@@ -96,7 +96,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'CON ESTÁNDARES',
     tail: 'DE EXCELENCIA',
     subtitle: 'Genética, producción y exportación pecuaria premium',
-    phone: '+51 901 442 429',
+    phone: '+51 943 704 298',
     email: 'info@agrosumak.com',
   },
   ssomasafe: {
@@ -104,8 +104,9 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'LA SEGURIDAD',
     tail: 'Y CONTINUIDAD OPERATIVA',
     subtitle: 'Consultoría en seguridad y salud en el trabajo, y EPP certificados',
-    // Shared management line with quantukperu and abubu — confirmed by the site's own
-    // JSON-LD "telephone" field, and by the user (same ownership across the three).
+    // Shared management line across the group — confirmed by the user. The same number
+    // appears on quantukperu, abubu, corporacionyanayacu, ynsumedic, agrosumak,
+    // aguayanayacu, yanayacuclean, surelife360, rekuperat and somostributa.
     phone: '+51 943 704 298',
     email: 'info@ssomasafe.com',
   },
@@ -115,8 +116,7 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     tail: '',
     subtitle: 'Fertilizantes, maquinaria e insumos para el agro exportador',
     phone: '+51 987 664 321',
-    // Published on their site under a different domain than trustagroexport.com.
-    email: 'info@trustagro.com',
+    email: 'info@trustagroexport.com',
   },
   abubu: {
     lead: 'Todo para',
@@ -131,17 +131,15 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'COMPLETA',
     tail: '',
     subtitle: 'Del proveedor de tu proveedor al cliente de tu cliente',
-    phone: '+51 965 758 257',
-    // Published on their site under a different domain than supplylogistic360.com.
-    email: 'info@supply360.com',
+    phone: '+51 994 693 529',
+    email: 'info@supplylogistic360.com',
   },
   corporacionyanayacu: {
     lead: '',
     highlight: '',
     tail: 'IMPULSAMOS EL DESARROLLO DE NUESTRO PAÍS',
     subtitle: 'Soluciones integrales para un futuro sostenible',
-    // From the corporate artwork rather than the website.
-    phone: '+51 936 773 980',
+    phone: '+51 943 704 298',
     email: 'info@corporacionyanayacu.com',
   },
   tuperfil360: {
@@ -153,13 +151,14 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     email: 'info@tuperfil360.com',
   },
   somostributa: {
-    // PLACEHOLDER: somostributa.com serves an empty directory listing, so there was no
-    // published wording to take. Replace once the site is live.
+    // PLACEHOLDER copy and email: somostributa.com serves an empty directory listing,
+    // so there was no published wording to take. Replace once the site is live. The
+    // phone is real — the shared group line, confirmed by the user.
     lead: 'Tu empresa',
     highlight: 'AL DÍA',
     tail: 'CON SUS OBLIGACIONES',
     subtitle: 'Asesoría contable y tributaria para empresas',
-    phone: '',
+    phone: '+51 943 704 298',
     email: '',
   },
   parkeatcar: {
@@ -175,16 +174,15 @@ export const COMPANY_PROFILES: Readonly<Record<string, CompanyProfile>> = {
     highlight: 'RECUPERACIÓN FINANCIERA',
     tail: 'Y EL COMPLIANCE',
     subtitle: 'Cobranza omnicanal con inteligencia artificial bajo normativa SBS',
-    phone: '+51 997 091 106',
-    // Published on their site spelled with a "c" rather than the brand "k".
-    email: 'info@recuperat.com',
+    phone: '+51 943 704 298',
+    email: 'info@rekuperat.com',
   },
   ynsumedic: {
     lead: 'Soluciones médicas corporativas',
     highlight: 'DE ALTA PRECISIÓN',
     tail: '',
     subtitle: 'Suministros médicos y salud ocupacional para empresas',
-    phone: '+51 902 670 591',
+    phone: '+51 943 704 298',
     email: 'info@ynsumedic.com',
   },
   quantukperu: {
