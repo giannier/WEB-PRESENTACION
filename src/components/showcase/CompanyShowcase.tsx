@@ -114,7 +114,7 @@ export function CompanyShowcase() {
               <BrushStroke color={color} />
               {profile.lead !== '' && (
                 <p
-                  className="relative text-balance text-xl font-light leading-[1.25] sm:text-2xl sm:leading-[1.3] lg:text-3xl"
+                  className="relative text-balance text-xl font-bold leading-[1.25] sm:text-2xl sm:leading-[1.3] lg:text-3xl"
                   style={{ color: textColor }}
                 >
                   {profile.lead}
