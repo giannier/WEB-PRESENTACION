@@ -21,6 +21,9 @@ export const COMPANY_PORTFOLIO: Readonly<Record<string, readonly PortfolioItem[]
     { type: 'image', src: '/portafolio/aguayanayacu/1.webp', name: '1' },
     { type: 'image', src: '/portafolio/aguayanayacu/2.webp', name: '2' },
   ],
+  corporacionyanayacu: [
+    { type: 'image', src: '/portafolio/corporacionyanayacu/1.webp', name: '1' },
+  ],
   quantukperu: [
     { type: 'image', src: '/portafolio/quantukperu/1.webp', name: '1' },
   ],
@@ -42,6 +45,7 @@ export const COMPANY_PORTFOLIO: Readonly<Record<string, readonly PortfolioItem[]
   ],
   supplylogistic360: [
     { type: 'image', src: '/portafolio/supplylogistic360/1.webp', name: '1' },
+    { type: 'image', src: '/portafolio/supplylogistic360/2.webp', name: '2' },
   ],
   trustagroexport: [
     { type: 'image', src: '/portafolio/trustagroexport/1.webp', name: '1' },
