@@ -13,6 +13,19 @@ export type PortfolioItem = {
 };
 
 export const COMPANY_PORTFOLIO: Readonly<Record<string, readonly PortfolioItem[]>> = {
+  rekuperat: [
+    { type: 'image', src: '/portafolio/rekuperat/1.webp', name: '1' },
+  ],
+  somostributa: [
+    { type: 'image', src: '/portafolio/somostributa/1.webp', name: '1' },
+  ],
+  ssomasafe: [
+    { type: 'image', src: '/portafolio/ssomasafe/1.webp', name: '1' },
+    { type: 'image', src: '/portafolio/ssomasafe/2.webp', name: '2' },
+  ],
+  trustagroexport: [
+    { type: 'image', src: '/portafolio/trustagroexport/1.webp', name: '1' },
+  ],
   tuperfil360: [
     { type: 'image', src: '/portafolio/tuperfil360/1.webp', name: '1' },
     { type: 'image', src: '/portafolio/tuperfil360/2.webp', name: '2' },
