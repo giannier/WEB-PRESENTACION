@@ -5,12 +5,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ContactFormDialog } from '@/components/ui/ContactFormDialog';
 import { hudButtonClassName } from '@/components/ui/hudButton';
-import { FormIcon, QrIcon } from '@/components/ui/icons';
+import { FormIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
+import { PortfolioDialog } from '@/components/ui/PortfolioDialog';
 import { QrDialog } from '@/components/ui/QrDialog';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
 import { useWheel } from '@/context/WheelContext';
 import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
+import { portfolioFor } from '@/data/companyPortfolio';
 import {
   HINT_FADE_DURATION,
   HUD_DIM_DURATION,
@@ -18,15 +20,17 @@ import {
   HUD_RESTORE_DURATION,
 } from '@/lib/constants';
 
-type OpenDialog = 'qr' | 'form' | null;
+type OpenDialog = 'qr' | 'form' | 'portfolio' | null;
 
 /**
- * Chrome over the wheel panel: the active company, the position counter and the three
+ * Chrome over the wheel panel: the active company, the position counter and its
  * actions.
  *
  *   "Ingresar a la web"  -> company website in a new tab
  *   "QR de información"  -> QR code to the company's social links page
  *   "Formulario"         -> networking contact form
+ *   "Portafolio"         -> flyers/catalogues from public/portafolio/<slug>, only shown
+ *                           for a company that actually has files there
  *
  * Re-renders only when `activeIndex`, `hasInteracted` or `isTransitioning` change —
  * never per frame. The wrapper is `pointer-events-none` so drags pass straight through
@@ -80,6 +84,7 @@ export function CompanyHud() {
   if (company === undefined) return null;
 
   const color = companyColor(company.slug);
+  const hasPortfolio = portfolioFor(company.slug).length > 0;
 
   return (
     <>
@@ -147,12 +152,27 @@ export function CompanyHud() {
                 <span>Formulario</span>
               </button>
             </div>
+
+            {hasPortfolio && (
+              <div className="pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={() => setOpenDialog('portfolio')}
+                  aria-haspopup="dialog"
+                  className={hudButtonClassName('secondary')}
+                >
+                  <PortfolioIcon className="h-5 w-5 shrink-0" />
+                  <span>Portafolio</span>
+                </button>
+              </div>
+            )}
           </nav>
         </footer>
       </div>
 
       <QrDialog company={company} open={openDialog === 'qr'} onClose={closeDialog} />
       <ContactFormDialog company={company} open={openDialog === 'form'} onClose={closeDialog} />
+      <PortfolioDialog company={company} open={openDialog === 'portfolio'} onClose={closeDialog} />
     </>
   );
 }

@@ -9,13 +9,14 @@ cylinder on a white ground, spinning right to left with real inertia and snappin
 nearest logo. The diagonal between the two panels, the highlighted words and the primary
 button all take the brand colour of whichever company is in focus.
 
-Three actions sit under the wheel for the selected company:
+Actions sit under the wheel for the selected company:
 
 | Button | What it does |
 | --- | --- |
 | **Ingresar a la web** | Opens the company website in a new tab |
 | **QR de información** | Shows a QR code that opens the company's social links page (`/redes/<slug>`) |
 | **Formulario** | Captures a networking contact and appends it to Google Sheets |
+| **Portafolio** | Shows the flyers/catalogues from `public/portafolio/<slug>/`; only appears for a company that has any — see [Company portfolios](#company-portfolios) |
 
 Tapping a logo only selects it. All source, identifiers and comments are in English;
 all on-screen copy is in neutral, professional Spanish.
@@ -126,6 +127,15 @@ media: { type: 'video', src: '/portadas/agrosumak.mp4', poster: '/portadas/agros
 Headlines are split into `lead` / `highlight` / `tail` so the middle part can be painted
 in the brand colour without HTML inside a string. The seeded copy, phones and emails come
 from each company's own website.
+
+### Company portfolios
+
+Drop images (`.jpg`, `.png`, `.webp`, `.avif`) or PDFs into `public/portafolio/<slug>/` —
+any file name, any count — and the "Portafolio" HUD button appears for that company,
+opening a dialog that links each file full-size in a new tab. `npm run portfolio:scan`
+resolves every folder into `src/data/companyPortfolio.ts`, the same generated-manifest
+pattern as the cover artwork above; it also runs automatically before `dev` and `build`.
+A company with no folder (or an empty one) simply gets no button — nothing renders empty.
 
 ### Layout and orientation
 
