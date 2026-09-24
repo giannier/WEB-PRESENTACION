@@ -73,6 +73,14 @@ export function ArrowRightIcon(props: IconProps) {
   );
 }
 
+export function ArrowLeftIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M20 12H6M11 7l-5 5 5 5" />
+    </BaseIcon>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

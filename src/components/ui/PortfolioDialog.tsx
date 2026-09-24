@@ -1,7 +1,8 @@
 'use client';
 
-import { ExternalIcon } from '@/components/ui/icons';
-import { Modal } from '@/components/ui/Modal';
+import { useEffect, useRef, useState } from 'react';
+
+import { ArrowLeftIcon, ArrowRightIcon } from '@/components/ui/icons';
 import type { Company } from '@/data/companies';
 import { portfolioFor } from '@/data/companyPortfolio';
 
@@ -13,52 +14,139 @@ type PortfolioDialogProps = {
 
 /**
  * "Portafolio": flyers, catalogues or product sheets a company dropped into its own
- * `public/portafolio/<slug>/` folder (see `scripts/scan-portfolio.mjs`). Each item opens
- * full-size in a new tab — an image as itself, a PDF the way every browser already
- * renders one natively, so no in-page viewer is needed.
+ * `public/portafolio/<slug>/` folder (see `scripts/scan-portfolio.mjs`).
+ *
+ * A full-screen viewer, not a grid of thumbnails that hands the visitor off to a new
+ * tab — the whole point is for someone browsing the stand to see the flyer itself, large,
+ * without losing the wheel underneath. A native `<dialog>` still owns the top layer,
+ * focus trap and Escape-to-close exactly like the shared `<Modal>`, but sized to the full
+ * viewport instead of a small centred card. A PDF renders the same way through an
+ * `<iframe>`, so "Regresar" is always the one way back, never a second browser tab.
  */
 export function PortfolioDialog({ company, open, onClose }: PortfolioDialogProps) {
   const items = portfolioFor(company.slug);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog === null) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog === null) return;
+    dialog.addEventListener('close', onClose);
+    return () => {
+      dialog.removeEventListener('close', onClose);
+    };
+  }, [onClose]);
+
+  // Always reopen on the first image, whichever company or item was showing last time.
+  useEffect(() => {
+    if (open) setIndex(0);
+  }, [open, company.slug]);
+
+  const current = items[index];
+  const hasMultiple = items.length > 1;
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={`Portafolio de ${company.name}`}
-      description="Flyers, catálogos y fichas de producto."
+    <dialog
+      ref={dialogRef}
+      aria-label={`Portafolio de ${company.name}`}
+      className="m-0 h-dvh max-h-none w-screen max-w-none bg-neutral-950 p-0 backdrop:bg-neutral-950"
     >
-      {items.length === 0 ? (
-        <p className="text-center text-sm text-neutral-500">
-          Esta empresa aún no tiene portafolio cargado.
-        </p>
-      ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {items.map((item) => (
-            <li key={item.src}>
-              <a
-                href={item.src}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block overflow-hidden rounded-2xl border border-neutral-200 transition-colors hover:border-neutral-300"
-              >
-                {item.type === 'image' ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.src}
-                    alt={`${item.name} — ${company.name}`}
-                    className="aspect-[3/4] w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 bg-neutral-50 p-3 text-center">
-                    <ExternalIcon className="h-6 w-6 text-neutral-400 transition-colors group-hover:text-neutral-600" />
-                    <span className="text-xs font-medium text-neutral-600">{item.name}</span>
-                  </div>
-                )}
-              </a>
-            </li>
-          ))}
-        </ul>
+      {open && (
+        <div className="relative flex h-full w-full flex-col">
+          <header className="flex shrink-0 items-center justify-between gap-4 px-3 py-3 sm:px-5">
+            <button
+              type="button"
+              onClick={onClose}
+              className={[
+                'inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5',
+                'text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+              ].join(' ')}
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Regresar
+            </button>
+
+            {hasMultiple && (
+              <span className="text-sm tracking-wide text-white/70">
+                {index + 1} / {items.length}
+              </span>
+            )}
+          </header>
+
+          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+            {current === undefined ? (
+              <p className="px-6 text-center text-sm text-white/70">
+                Esta empresa aún no tiene portafolio cargado.
+              </p>
+            ) : current.type === 'image' ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={current.src}
+                src={current.src}
+                alt={`${current.name} — ${company.name}`}
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : (
+              <iframe key={current.src} src={current.src} title={current.name} className="h-full w-full" />
+            )}
+
+            {hasMultiple && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIndex((value) => (value - 1 + items.length) % items.length)}
+                  aria-label="Imagen anterior"
+                  className={[
+                    'absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3',
+                    'text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:left-4',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+                  ].join(' ')}
+                >
+                  <ArrowLeftIcon className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIndex((value) => (value + 1) % items.length)}
+                  aria-label="Imagen siguiente"
+                  className={[
+                    'absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3',
+                    'text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:right-4',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+                  ].join(' ')}
+                >
+                  <ArrowRightIcon className="h-5 w-5" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {hasMultiple && (
+            <div className="flex shrink-0 items-center justify-center gap-2 pb-5 pt-2">
+              {items.map((item, itemIndex) => (
+                <button
+                  key={item.src}
+                  type="button"
+                  onClick={() => setIndex(itemIndex)}
+                  aria-label={`Ir a la imagen ${itemIndex + 1}`}
+                  aria-current={itemIndex === index}
+                  className={[
+                    'h-2 w-2 rounded-full transition-colors',
+                    itemIndex === index ? 'bg-white' : 'bg-white/30 hover:bg-white/50',
+                  ].join(' ')}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
-    </Modal>
+    </dialog>
   );
 }
