@@ -28,6 +28,7 @@ export const COMPANIES: readonly Company[] = [
   { slug: 'agrosumak', name: 'Agrosumak', url: 'https://agrosumak.com' },
   { slug: 'supplylogistic360', name: 'Supply Logistic 360', url: 'https://supplylogistic360.com' },
   { slug: 'quantukperu', name: 'Quantuk Perú', url: 'https://quantukperu.com' },
+  { slug: 'tuperfil360', name: 'Tu Perfil 360', url: 'https://tuperfil360.com' },
   { slug: 'surelife360', name: 'Surelife 360', url: 'https://surelife360.com' },
   { slug: 'parkeatcar', name: 'Parkeat Car', url: 'https://parkeatcar.com' },
 
@@ -38,7 +39,6 @@ export const COMPANIES: readonly Company[] = [
   { slug: 'aguayanayacu', name: 'Agua Yanayacu', url: 'https://aguayanayacu.com' },
   { slug: 'yanayacuclean', name: 'Yanayacu Clean', url: 'https://yanayacuclean.com' },
   { slug: 'abubu', name: 'Abubu', url: 'https://abubu.com.pe' },
-  { slug: 'tuperfil360', name: 'Tu Perfil 360', url: 'https://tuperfil360.com' },
   { slug: 'somostributa', name: 'Tributa', url: 'https://somostributa.com' },
   { slug: 'rekuperat', name: 'Rekuperat', url: 'https://rekuperat.com' },
   { slug: 'ynsumedic', name: 'Ynsumedic', url: 'https://ynsumedic.com' },
