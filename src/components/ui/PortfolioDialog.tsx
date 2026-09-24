@@ -3,28 +3,29 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { ArrowLeftIcon, ArrowRightIcon } from '@/components/ui/icons';
-import type { Company } from '@/data/companies';
-import { portfolioFor } from '@/data/companyPortfolio';
+import type { PortfolioItem } from '@/data/companyPortfolio';
 
 type PortfolioDialogProps = {
-  readonly company: Company;
+  readonly title: string;
+  readonly items: readonly PortfolioItem[];
   readonly open: boolean;
   readonly onClose: () => void;
 };
 
 /**
- * "Portafolio": flyers, catalogues or product sheets a company dropped into its own
- * `public/portafolio/<slug>/` folder (see `scripts/scan-portfolio.mjs`).
+ * Full-screen media viewer shared by the "Portafolio" (images) and "Catálogo" (PDFs)
+ * HUD buttons — same component, just handed a different, pre-filtered item list and
+ * title by `CompanyHud`. Files come from a company's own `public/portafolio/<slug>/`
+ * folder (see `scripts/scan-portfolio.mjs`).
  *
- * A full-screen viewer, not a grid of thumbnails that hands the visitor off to a new
- * tab — the whole point is for someone browsing the stand to see the flyer itself, large,
- * without losing the wheel underneath. A native `<dialog>` still owns the top layer,
- * focus trap and Escape-to-close exactly like the shared `<Modal>`, but sized to the full
- * viewport instead of a small centred card. A PDF renders the same way through an
- * `<iframe>`, so "Regresar" is always the one way back, never a second browser tab.
+ * Not a grid of thumbnails that hands the visitor off to a new tab — the whole point is
+ * for someone browsing the stand to see the flyer itself, large, without losing the
+ * wheel underneath. A native `<dialog>` still owns the top layer, focus trap and
+ * Escape-to-close exactly like the shared `<Modal>`, but sized to the full viewport
+ * instead of a small centred card. A PDF renders the same way through an `<iframe>`, so
+ * "Regresar" is always the one way back, never a second browser tab.
  */
-export function PortfolioDialog({ company, open, onClose }: PortfolioDialogProps) {
-  const items = portfolioFor(company.slug);
+export function PortfolioDialog({ title, items, open, onClose }: PortfolioDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [index, setIndex] = useState(0);
 
@@ -44,10 +45,10 @@ export function PortfolioDialog({ company, open, onClose }: PortfolioDialogProps
     };
   }, [onClose]);
 
-  // Always reopen on the first image, whichever company or item was showing last time.
+  // Always reopen on the first item, whichever one or which list was showing last time.
   useEffect(() => {
     if (open) setIndex(0);
-  }, [open, company.slug]);
+  }, [open, items]);
 
   const current = items[index];
   const hasMultiple = items.length > 1;
@@ -55,7 +56,7 @@ export function PortfolioDialog({ company, open, onClose }: PortfolioDialogProps
   return (
     <dialog
       ref={dialogRef}
-      aria-label={`Portafolio de ${company.name}`}
+      aria-label={title}
       className="m-0 h-dvh max-h-none w-screen max-w-none bg-neutral-950 p-0 backdrop:bg-neutral-950"
     >
       {open && (
@@ -83,15 +84,13 @@ export function PortfolioDialog({ company, open, onClose }: PortfolioDialogProps
 
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             {current === undefined ? (
-              <p className="px-6 text-center text-sm text-white/70">
-                Esta empresa aún no tiene portafolio cargado.
-              </p>
+              <p className="px-6 text-center text-sm text-white/70">Todavía no hay nada cargado aquí.</p>
             ) : current.type === 'image' ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={current.src}
                 src={current.src}
-                alt={`${current.name} — ${company.name}`}
+                alt={`${title} — ${current.name}`}
                 className="max-h-full max-w-full object-contain"
               />
             ) : (

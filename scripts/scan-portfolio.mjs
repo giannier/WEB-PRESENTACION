@@ -73,7 +73,9 @@ for (const entry of companyDirs) {
       return [
         {
           type: isPdf ? 'pdf' : 'image',
-          src: `/portafolio/${slug}/${file}`,
+          // File names can contain spaces or accents ("CATÁLOGO SSOMA.pdf"); encoding
+          // only the segment (not the slashes) keeps the URL valid everywhere.
+          src: `/portafolio/${slug}/${encodeURIComponent(file)}`,
           name: path.basename(file, extension),
         },
       ];

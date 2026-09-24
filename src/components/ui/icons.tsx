@@ -107,6 +107,15 @@ export function PortfolioIcon(props: IconProps) {
   );
 }
 
+export function CatalogIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M6.5 4h9A1.5 1.5 0 0 1 17 5.5v15l-5-2.6-5 2.6v-15A1.5 1.5 0 0 1 6.5 4z" />
+      <path d="M9 9h4" />
+    </BaseIcon>
+  );
+}
+
 export function ExternalIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

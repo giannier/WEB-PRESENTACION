@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ContactFormDialog } from '@/components/ui/ContactFormDialog';
 import { hudButtonClassName } from '@/components/ui/hudButton';
-import { FormIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
+import { CatalogIcon, FormIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
 import { PortfolioDialog } from '@/components/ui/PortfolioDialog';
 import { QrDialog } from '@/components/ui/QrDialog';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
@@ -20,7 +20,7 @@ import {
   HUD_RESTORE_DURATION,
 } from '@/lib/constants';
 
-type OpenDialog = 'qr' | 'form' | 'portfolio' | null;
+type OpenDialog = 'qr' | 'form' | 'portfolio' | 'catalog' | null;
 
 /**
  * Chrome over the wheel panel: the active company, the position counter and its
@@ -29,8 +29,10 @@ type OpenDialog = 'qr' | 'form' | 'portfolio' | null;
  *   "Ingresar a la web"  -> company website in a new tab
  *   "QR de información"  -> QR code to the company's social links page
  *   "Formulario"         -> networking contact form
- *   "Portafolio"         -> flyers/catalogues from public/portafolio/<slug>, only shown
- *                           for a company that actually has files there
+ *   "Portafolio"         -> images from public/portafolio/<slug>, only shown for a
+ *                           company that actually has any
+ *   "Catálogo"           -> PDFs from the same folder, split into its own button so a
+ *                           product catalogue does not get lost among flyer photos
  *
  * Re-renders only when `activeIndex`, `hasInteracted` or `isTransitioning` change —
  * never per frame. The wrapper is `pointer-events-none` so drags pass straight through
@@ -84,7 +86,9 @@ export function CompanyHud() {
   if (company === undefined) return null;
 
   const color = companyColor(company.slug);
-  const hasPortfolio = portfolioFor(company.slug).length > 0;
+  const portfolioItems = portfolioFor(company.slug);
+  const images = portfolioItems.filter((item) => item.type === 'image');
+  const catalogItems = portfolioItems.filter((item) => item.type === 'pdf');
 
   return (
     <>
@@ -153,7 +157,7 @@ export function CompanyHud() {
               </button>
             </div>
 
-            {hasPortfolio && (
+            {images.length > 0 && (
               <div className="pointer-events-auto">
                 <button
                   type="button"
@@ -166,13 +170,38 @@ export function CompanyHud() {
                 </button>
               </div>
             )}
+
+            {catalogItems.length > 0 && (
+              <div className="pointer-events-auto">
+                <button
+                  type="button"
+                  onClick={() => setOpenDialog('catalog')}
+                  aria-haspopup="dialog"
+                  className={hudButtonClassName('secondary')}
+                >
+                  <CatalogIcon className="h-5 w-5 shrink-0" />
+                  <span>Catálogo</span>
+                </button>
+              </div>
+            )}
           </nav>
         </footer>
       </div>
 
       <QrDialog company={company} open={openDialog === 'qr'} onClose={closeDialog} />
       <ContactFormDialog company={company} open={openDialog === 'form'} onClose={closeDialog} />
-      <PortfolioDialog company={company} open={openDialog === 'portfolio'} onClose={closeDialog} />
+      <PortfolioDialog
+        title={`Portafolio de ${company.name}`}
+        items={images}
+        open={openDialog === 'portfolio'}
+        onClose={closeDialog}
+      />
+      <PortfolioDialog
+        title={`Catálogo de ${company.name}`}
+        items={catalogItems}
+        open={openDialog === 'catalog'}
+        onClose={closeDialog}
+      />
     </>
   );
 }
