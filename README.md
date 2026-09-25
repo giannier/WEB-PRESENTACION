@@ -243,6 +243,34 @@ Set in Vercel, **Settings → Environment Variables**:
 Without it, `/api/voice-contact` answers 503 and the recorder surfaces that as an error —
 the rest of the form (typed entry) keeps working regardless.
 
+### Voice navigation and quick registration
+
+Saying "mostrar `<empresa>`", "abrir portafolio/catálogo de `<empresa>`", "siguiente",
+"cerrar", "código qr" or "formulario" drives the wheel and the HUD dialogs directly — no
+server round-trip, no OpenAI usage: `src/lib/voiceIntent.ts` matches the browser's own
+`SpeechRecognition` output against a small fixed vocabulary, entirely client-side. Chrome
+on Android is the target; the UI hides itself on a browser without `SpeechRecognition`
+(Safari/iOS).
+
+"Registrar cliente" is the one voice command that still leaves the browser: it opens a
+background banner that listens to the ongoing conversation, sends the accumulated
+transcript to `/api/quick-register` after each sentence, and — once it has heard a name, a
+phone and a rubro — saves through `/api/quick-contact` and shows "Cliente registrado",
+with no review step. That reduced, three-field shape is deliberate (no company name, no
+consent checkbox); `/api/quick-contact` is its own small validator, not the same
+`validateContact()` the full "Formulario" uses, so this never weakens that form's rules.
+
+`/api/quick-register` forwards only text (the transcript) to a *second*, simpler n8n
+workflow — GPT extraction alone, no Whisper, since the browser already produced the text
+for free:
+
+| Name | Value |
+| --- | --- |
+| `N8N_QUICK_REGISTER_WEBHOOK_URL` | that workflow's webhook URL |
+
+Without it, saying "registrar cliente" opens the banner but every check fails with a
+clear error — voice navigation and the full form are unaffected.
+
 ---
 
 ## Adding or removing a company

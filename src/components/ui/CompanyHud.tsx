@@ -8,6 +8,7 @@ import { hudButtonClassName } from '@/components/ui/hudButton';
 import { CatalogIcon, FormIcon, MicIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
 import { PortfolioDialog } from '@/components/ui/PortfolioDialog';
 import { QrDialog } from '@/components/ui/QrDialog';
+import { QuickRegisterBanner } from '@/components/ui/QuickRegisterBanner';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
 import { useWheel } from '@/context/WheelContext';
 import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
@@ -41,6 +42,9 @@ const VOICE_TOAST_DURATION_MS = 2500;
  *                           company that actually has any
  *   "Catálogo"           -> PDFs from the same folder, split into its own button so a
  *                           product catalogue does not get lost among flyer photos
+ *   "registrar cliente"  -> (voice only) opens `<QuickRegisterBanner>`, which listens to
+ *                           the live conversation and auto-saves once it has heard a
+ *                           name, phone and rubro — no tap, unlike "Formulario"
  *
  * Also listens continuously for voice commands (see `useVoiceControl/parseVoiceCommand`)
  * so the same actions work by saying, e.g., "mostrar ssoma" or "abrir catálogo de
@@ -56,6 +60,7 @@ export function CompanyHud() {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
   const [pendingDialog, setPendingDialog] = useState<PendingDialog>(null);
   const [voiceToast, setVoiceToast] = useState<string | null>(null);
+  const [quickRegisterActive, setQuickRegisterActive] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
@@ -93,7 +98,7 @@ export function CompanyHud() {
    */
   const handleVoiceCommand = useCallback(
     (command: VoiceCommand) => {
-      if (openDialog !== null) {
+      if (openDialog !== null || quickRegisterActive) {
         if (command.type === 'close') closeDialog();
         return;
       }
@@ -126,6 +131,9 @@ export function CompanyHud() {
         case 'open-form':
           setOpenDialog('form');
           return;
+        case 'quick-register':
+          setQuickRegisterActive(true);
+          return;
         case 'open-website':
           // Best-effort: a browser can refuse a `window.open` that was not triggered by
           // a direct tap, which a speech-recognition callback never is. When that
@@ -144,12 +152,13 @@ export function CompanyHud() {
           return;
       }
     },
-    [openDialog, closeDialog, company, activeIndex, jumpToIndex, nudge, showVoiceToast],
+    [openDialog, quickRegisterActive, closeDialog, company, activeIndex, jumpToIndex, nudge, showVoiceToast],
   );
 
-  // Paused (microphone fully released) only while the contact form's own recorder needs
-  // it — every other dialog just narrows voice down to "cerrar" above.
-  const voice = useVoiceControl(openDialog !== 'form', handleVoiceCommand);
+  // Paused (microphone fully released) while either the contact form's own recorder or
+  // the quick-register banner needs the microphone to itself — every other dialog just
+  // narrows voice down to "cerrar" above.
+  const voice = useVoiceControl(openDialog !== 'form' && !quickRegisterActive, handleVoiceCommand);
 
   // The swipe hint retires permanently after the first interaction.
   useEffect(() => {
@@ -196,9 +205,14 @@ export function CompanyHud() {
   return (
     <>
       <div ref={rootRef} className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end">
+        {quickRegisterActive && (
+          <QuickRegisterBanner interestCompany={company.name} onDone={() => setQuickRegisterActive(false)} />
+        )}
+
         {/* Quiet by design: a status pill, not a prompt asking for attention — this
-            experience is meant to work whether or not anyone notices it is listening. */}
-        {voice.supported && (
+            experience is meant to work whether or not anyone notices it is listening.
+            Hidden during quick-register: that banner already shows its own mic state. */}
+        {voice.supported && !quickRegisterActive && (
           <div className="absolute right-3 top-3 sm:right-6 sm:top-6">
             <div
               className={[

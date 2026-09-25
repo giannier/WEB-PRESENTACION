@@ -16,6 +16,7 @@ export type VoiceCommand =
   | { readonly type: 'open-catalog'; readonly company: Company | null }
   | { readonly type: 'open-qr' }
   | { readonly type: 'open-form' }
+  | { readonly type: 'quick-register' }
   | { readonly type: 'open-website' }
   | { readonly type: 'next' }
   | { readonly type: 'previous' }
@@ -69,7 +70,15 @@ function matchCompany(utterance: string): Company | null {
 const CATALOG_WORDS = ['catalogo'];
 const PORTFOLIO_WORDS = ['portafolio', 'portfolio'];
 const QR_WORDS = ['qr', 'codigo qr'];
-const FORM_WORDS = ['formulario', 'registrar contacto'];
+const FORM_WORDS = ['formulario'];
+/** Checked before FORM_WORDS: "registrar cliente" must win over a bare "registrar". */
+/** Each entry: every word in it must appear somewhere in the utterance, in any order and
+ *  with anything in between — "quiero registrar a un cliente nuevo" should match just as
+ *  well as the literal phrase "registrar cliente". */
+const QUICK_REGISTER_PHRASES: readonly (readonly string[])[] = [
+  ['registrar', 'cliente'],
+  ['registrar', 'contacto'],
+];
 const WEBSITE_WORDS = ['sitio web', 'pagina web', 'abrir la web', 'ingresar a la web'];
 const NEXT_WORDS = ['siguiente', 'proxima empresa', 'proximo'];
 const PREVIOUS_WORDS = ['anterior', 'atras'];
@@ -77,6 +86,11 @@ const CLOSE_WORDS = ['cerrar', 'regresar', 'volver', 'salir'];
 
 function includesAny(utterance: string, words: readonly string[]): boolean {
   return words.some((word) => utterance.includes(word));
+}
+
+function includesAllWords(utterance: string, words: readonly string[]): boolean {
+  const tokens = new Set(utterance.split(' '));
+  return words.every((word) => tokens.has(word));
 }
 
 export function parseVoiceCommand(rawUtterance: string): VoiceCommand {
@@ -90,6 +104,9 @@ export function parseVoiceCommand(rawUtterance: string): VoiceCommand {
     return { type: 'open-portfolio', company: matchCompany(utterance) };
   }
   if (includesAny(utterance, QR_WORDS)) return { type: 'open-qr' };
+  if (QUICK_REGISTER_PHRASES.some((words) => includesAllWords(utterance, words))) {
+    return { type: 'quick-register' };
+  }
   if (includesAny(utterance, FORM_WORDS)) return { type: 'open-form' };
   if (includesAny(utterance, NEXT_WORDS)) return { type: 'next' };
   if (includesAny(utterance, PREVIOUS_WORDS)) return { type: 'previous' };
