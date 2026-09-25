@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { ArrowLeftIcon, ArrowRightIcon } from '@/components/ui/icons';
 import type { PortfolioItem } from '@/data/companyPortfolio';
@@ -10,6 +10,14 @@ type PortfolioDialogProps = {
   readonly items: readonly PortfolioItem[];
   readonly open: boolean;
   readonly onClose: () => void;
+};
+
+/** Imperative handle so a voice "siguiente"/"anterior" heard while this dialog is open
+ *  can advance it — `CompanyHud` holds the ref, since this component's own `index` state
+ *  is otherwise fully internal and there is no other way in from outside. */
+export type PortfolioDialogHandle = {
+  readonly next: () => void;
+  readonly previous: () => void;
 };
 
 /**
@@ -25,9 +33,17 @@ type PortfolioDialogProps = {
  * instead of a small centred card. A PDF renders the same way through an `<iframe>`, so
  * "Regresar" is always the one way back, never a second browser tab.
  */
-export function PortfolioDialog({ title, items, open, onClose }: PortfolioDialogProps) {
+export const PortfolioDialog = forwardRef<PortfolioDialogHandle, PortfolioDialogProps>(function PortfolioDialog(
+  { title, items, open, onClose },
+  ref,
+) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [index, setIndex] = useState(0);
+
+  const goNext = () => setIndex((value) => (items.length === 0 ? 0 : (value + 1) % items.length));
+  const goPrevious = () => setIndex((value) => (items.length === 0 ? 0 : (value - 1 + items.length) % items.length));
+
+  useImperativeHandle(ref, () => ({ next: goNext, previous: goPrevious }));
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -101,7 +117,7 @@ export function PortfolioDialog({ title, items, open, onClose }: PortfolioDialog
               <>
                 <button
                   type="button"
-                  onClick={() => setIndex((value) => (value - 1 + items.length) % items.length)}
+                  onClick={goPrevious}
                   aria-label="Imagen anterior"
                   className={[
                     'absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3',
@@ -113,7 +129,7 @@ export function PortfolioDialog({ title, items, open, onClose }: PortfolioDialog
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIndex((value) => (value + 1) % items.length)}
+                  onClick={goNext}
                   aria-label="Imagen siguiente"
                   className={[
                     'absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3',
@@ -148,4 +164,4 @@ export function PortfolioDialog({ title, items, open, onClose }: PortfolioDialog
       )}
     </dialog>
   );
-}
+});

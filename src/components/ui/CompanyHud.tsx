@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ContactFormDialog } from '@/components/ui/ContactFormDialog';
 import { hudButtonClassName } from '@/components/ui/hudButton';
 import { CatalogIcon, FormIcon, MicIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
-import { PortfolioDialog } from '@/components/ui/PortfolioDialog';
+import { PortfolioDialog, type PortfolioDialogHandle } from '@/components/ui/PortfolioDialog';
 import { QrDialog } from '@/components/ui/QrDialog';
 import { QuickRegisterBanner } from '@/components/ui/QuickRegisterBanner';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
@@ -65,6 +65,8 @@ export function CompanyHud() {
   const rootRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const portfolioViewerRef = useRef<PortfolioDialogHandle>(null);
+  const catalogViewerRef = useRef<PortfolioDialogHandle>(null);
 
   const company = COMPANIES[activeIndex];
   const closeDialog = useCallback(() => setOpenDialog(null), []);
@@ -92,14 +94,22 @@ export function CompanyHud() {
   }, [activeIndex, pendingDialog]);
 
   /**
-   * With a dialog already open, voice is deliberately deaf to everything except
-   * "cerrar" — someone reading a catalogue out loud to a visitor should not have a
-   * stray "quantuk" in their sentence jump the wheel out from under them.
+   * With a dialog already open, voice is deliberately deaf to nearly everything —
+   * someone reading a catalogue out loud to a visitor should not have a stray "quantuk"
+   * in their sentence jump the wheel out from under them. "Cerrar" always gets through;
+   * inside the portfolio/catalog viewer specifically, "siguiente"/"anterior" do too, so
+   * a hands-free "next" while showing a flyer actually flips the image.
    */
   const handleVoiceCommand = useCallback(
     (command: VoiceCommand) => {
       if (openDialog !== null || quickRegisterActive) {
-        if (command.type === 'close') closeDialog();
+        if (command.type === 'close') {
+          closeDialog();
+        } else if (openDialog === 'portfolio' || openDialog === 'catalog') {
+          const viewer = openDialog === 'portfolio' ? portfolioViewerRef.current : catalogViewerRef.current;
+          if (command.type === 'next') viewer?.next();
+          if (command.type === 'previous') viewer?.previous();
+        }
         return;
       }
       if (company === undefined) return;
@@ -335,12 +345,14 @@ export function CompanyHud() {
       <QrDialog company={company} open={openDialog === 'qr'} onClose={closeDialog} />
       <ContactFormDialog company={company} open={openDialog === 'form'} onClose={closeDialog} />
       <PortfolioDialog
+        ref={portfolioViewerRef}
         title={`Portafolio de ${company.name}`}
         items={images}
         open={openDialog === 'portfolio'}
         onClose={closeDialog}
       />
       <PortfolioDialog
+        ref={catalogViewerRef}
         title={`Catálogo de ${company.name}`}
         items={catalogItems}
         open={openDialog === 'catalog'}

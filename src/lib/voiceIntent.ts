@@ -38,23 +38,72 @@ const MIN_TOKEN_LENGTH = 4;
 
 type CompanyCandidate = { readonly company: Company; readonly token: string };
 
-const CANDIDATES: readonly CompanyCandidate[] = COMPANIES.flatMap((company) => {
-  const fullName = normalise(company.name);
-  const words = fullName.split(' ').filter((word) => word.length >= MIN_TOKEN_LENGTH);
-  const tokens = new Set([fullName, company.slug, ...words]);
+/** Full name and slug — checked as exact substrings first, since correctly-pronounced
+ *  speech matches these cheaply and predictably without needing fuzzy comparison. */
+const PHRASE_CANDIDATES: readonly CompanyCandidate[] = COMPANIES.map((company) => ({
+  company,
+  token: normalise(company.name),
+}));
+
+/** Individual distinguishing words ("zentek", "trust", "rekuperat"…) — these are what
+ *  get fuzzy-matched, since a single brand word is exactly what SpeechRecognition tends
+ *  to mishear ("Zentek" as "Centec", say) on names that are not real Spanish words. */
+const WORD_CANDIDATES: readonly CompanyCandidate[] = COMPANIES.flatMap((company) => {
+  const words = normalise(company.name)
+    .split(' ')
+    .filter((word) => word.length >= MIN_TOKEN_LENGTH);
+  const tokens = new Set([company.slug, ...words]);
   return [...tokens].map((token) => ({ company, token }));
 });
 
 /**
- * Finds the company whose name best overlaps the utterance. "Best" is the longest
- * matching token; a tie between two different companies (both Yanayacu businesses
- * matched on "yanayacu" alone, say) resolves to no match rather than guessing wrong.
+ * Standard edit distance — small strings only (brand-name-length), so the plain O(n·m)
+ * table is more than fast enough for nineteen companies checked per utterance. The
+ * non-null assertions below are all on indices the loop bounds guarantee are populated
+ * (every cell is written before any later cell reads it), not genuine uncertainty.
+ */
+function levenshtein(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const table: number[][] = Array.from({ length: rows }, (_, i) => {
+    const row = new Array<number>(cols).fill(0);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 1; j < cols; j += 1) table[0]![j] = j;
+
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      table[i]![j] = Math.min(table[i - 1]![j]! + 1, table[i]![j - 1]! + 1, table[i - 1]![j - 1]! + cost);
+    }
+  }
+  return table[rows - 1]![cols - 1]!;
+}
+
+/** How many edits a mis-transcribed word may still be considered "the same" brand word —
+ *  scales with length so a short word still needs to be close, a longer one has more
+ *  room (a single dropped or swapped syllable should not cost the whole match). */
+function fuzzyTolerance(tokenLength: number): number {
+  return Math.max(1, Math.floor(tokenLength / 4));
+}
+
+/**
+ * Finds the company whose name best overlaps the utterance.
+ *
+ * Two passes: an exact substring check against the full name/slug first (cheap, exact,
+ * covers correctly-pronounced speech), then — only if that finds nothing — a fuzzy
+ * word-by-word pass tolerant of the kind of mis-transcription SpeechRecognition produces
+ * on brand names that are not real Spanish words. Either way, "best" is the longest or
+ * closest matching token; a tie between two different companies (both Yanayacu
+ * businesses matched on "yanayacu" alone, say) resolves to no match rather than
+ * guessing wrong.
  */
 function matchCompany(utterance: string): Company | null {
   let best: { readonly company: Company; readonly length: number } | null = null;
   let tied = false;
 
-  for (const { company, token } of CANDIDATES) {
+  for (const { company, token } of PHRASE_CANDIDATES) {
     if (!utterance.includes(token)) continue;
     if (best === null || token.length > best.length) {
       best = { company, length: token.length };
@@ -63,8 +112,31 @@ function matchCompany(utterance: string): Company | null {
       tied = true;
     }
   }
+  if (best !== null) return tied ? null : best.company;
 
-  return best !== null && !tied ? best.company : null;
+  const words = utterance.split(' ');
+  type FuzzyMatch = { readonly company: Company; readonly length: number; readonly distance: number };
+  const matches: FuzzyMatch[] = [];
+
+  for (const { company, token } of WORD_CANDIDATES) {
+    const tolerance = fuzzyTolerance(token.length);
+    for (const word of words) {
+      if (Math.abs(word.length - token.length) > tolerance) continue;
+      const distance = levenshtein(word, token);
+      if (distance <= tolerance) matches.push({ company, length: token.length, distance });
+    }
+  }
+  if (matches.length === 0) return null;
+
+  // Lowest distance wins; a tie breaks toward the longer (more specific) token.
+  matches.sort((a, b) => a.distance - b.distance || b.length - a.length);
+  const winner = matches[0]!;
+  const isTied = matches.some(
+    (match) =>
+      match.distance === winner.distance && match.length === winner.length && match.company.slug !== winner.company.slug,
+  );
+
+  return isTied ? null : winner.company;
 }
 
 const CATALOG_WORDS = ['catalogo'];
