@@ -2,8 +2,10 @@
 
 import { useCallback, useId, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 
+import type { VoiceContactResult } from '@/app/api/voice-contact/route';
 import { CheckIcon } from '@/components/ui/icons';
 import { Modal } from '@/components/ui/Modal';
+import { MISSING_LABELS, VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import type { Company } from '@/data/companies';
 import {
   CONTACT_HONEYPOT_FIELD,
@@ -91,12 +93,36 @@ export function ContactFormDialog({ company, open, onClose }: ContactFormDialogP
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<ContactErrors>({});
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  const [voiceNote, setVoiceNote] = useState<{
+    readonly transcript: string;
+    readonly missing: readonly string[];
+  } | null>(null);
 
   const resetForm = useCallback(() => {
     setValues(EMPTY_VALUES);
     setConsent(false);
     setErrors({});
     setStatus({ kind: 'idle' });
+    setVoiceNote(null);
+  }, []);
+
+  /**
+   * A field a recording actually captured overwrites what was there; a field it stayed
+   * silent on is left alone. That is what makes a second, shorter recording ("y el
+   * correo es...") a way to fill in only what was missing, instead of wiping out
+   * everything the first one already got right.
+   */
+  const handleVoiceResult = useCallback((result: VoiceContactResult) => {
+    setValues((previous) => {
+      const next = { ...previous };
+      for (const field of Object.keys(EMPTY_VALUES) as FormField[]) {
+        const spoken = result.fields[field];
+        if (spoken !== '') next[field] = spoken;
+      }
+      return next;
+    });
+    setErrors({});
+    setVoiceNote({ transcript: result.transcript, missing: result.missing });
   }, []);
 
   const handleClose = useCallback(() => {
@@ -206,6 +232,27 @@ export function ContactFormDialog({ company, open, onClose }: ContactFormDialogP
           <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-xs text-neutral-600">
             Interesado en <strong className="font-semibold text-neutral-900">{company.name}</strong>
           </p>
+
+          <VoiceRecorder onResult={handleVoiceResult} />
+
+          {voiceNote !== null && (
+            <div className="flex flex-col gap-2">
+              {voiceNote.missing.length > 0 && (
+                <p role="alert" className="rounded-2xl bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                  Todavía falta: {voiceNote.missing.map((field) => MISSING_LABELS[field] ?? field).join(', ')}.
+                  Grabá de nuevo para completarlo, o escribilo abajo.
+                </p>
+              )}
+              {voiceNote.transcript !== '' && (
+                <details className="rounded-2xl border border-neutral-200 px-4 py-3 text-xs text-neutral-500">
+                  <summary className="cursor-pointer select-none font-medium text-neutral-700">
+                    Lo que se escuchó
+                  </summary>
+                  <p className="mt-2">{voiceNote.transcript}</p>
+                </details>
+              )}
+            </div>
+          )}
 
           <FieldGroup legend="Persona">
             <TextField name="fullName" label="Nombre de la persona" required value={values.fullName} onChange={update('fullName')} error={errors.fullName} />

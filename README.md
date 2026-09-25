@@ -219,6 +219,32 @@ with `= + - @` so nothing is evaluated as a spreadsheet formula.
 
 ---
 
+## Voice-to-contact (n8n + OpenAI)
+
+The "Formulario" dialog has a "Registrar por voz" recorder above the fields: it records a
+short self-introduction, uploads it to `/api/voice-contact`, and pre-fills whatever the
+workflow could make out — the person still reviews and taps **Guardar contacto** the same
+as a typed submission, so a mis-transcribed field never reaches the sheet unseen.
+
+The actual transcription and field extraction happens outside this codebase, in an n8n
+workflow: audio in → OpenAI Whisper transcribes it → GPT-4o-mini sorts the text into the
+same fields `contact.ts` defines and reports which required ones are still missing → n8n
+returns that as JSON. `/api/voice-contact` only forwards the recording there and normalises
+the response — same reason contacts go through `/api/contacts` instead of hitting the
+Sheets webhook directly, so the workflow URL (and whatever OpenAI usage it triggers) never
+reaches the browser.
+
+Set in Vercel, **Settings → Environment Variables**:
+
+| Name | Value |
+| --- | --- |
+| `N8N_VOICE_WEBHOOK_URL` | the n8n webhook URL (e.g. `.../webhook/voice-contact`) |
+
+Without it, `/api/voice-contact` answers 503 and the recorder surfaces that as an error —
+the rest of the form (typed entry) keeps working regardless.
+
+---
+
 ## Adding or removing a company
 
 1. Drop the logo into `public/logos/<slug>.png` and run `npm run logos:optimize`.

@@ -116,6 +116,23 @@ export function CatalogIcon(props: IconProps) {
   );
 }
 
+export function MicIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6" />
+    </BaseIcon>
+  );
+}
+
+export function StopIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </BaseIcon>
+  );
+}
+
 export function ExternalIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>
