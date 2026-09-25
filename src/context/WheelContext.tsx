@@ -27,7 +27,7 @@ import {
   SNAP_DURATION,
   SNAP_EASE,
 } from '@/lib/constants';
-import { angleStep, rotationForIndex } from '@/lib/math';
+import { angleStep, normalizeIndex, rotationForIndex } from '@/lib/math';
 
 /**
  * Animatable scalars for the confirmation pulse.
@@ -69,6 +69,9 @@ export type WheelContextValue = {
   readonly killSnap: () => void;
   readonly snapToRotation: (target: number, duration?: number) => void;
   readonly nudge: (direction: number) => void;
+  /** Rotates straight to an arbitrary company by the shortest path — for voice/search,
+   *  where the target is not necessarily adjacent to whatever is currently in front. */
+  readonly jumpToIndex: (index: number) => void;
   /** Plays the acknowledgement pulse. The navigation itself belongs to the anchor. */
   readonly confirmSelection: (index: number) => void;
 };
@@ -150,6 +153,17 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       const step = angleStep(COMPANY_COUNT);
       const target = (Math.round(rotation.current / step) + direction) * step;
       snapToRotation(target, SNAP_DURATION);
+    },
+    [markInteracted, snapToRotation],
+  );
+
+  const jumpToIndex = useCallback(
+    (index: number) => {
+      if (isTransitioningRef.current) return;
+      const target = normalizeIndex(index, COMPANY_COUNT);
+      if (COMPANIES[target] === undefined) return;
+      markInteracted();
+      snapToRotation(rotationForIndex(target, rotation.current, COMPANY_COUNT), SNAP_DURATION);
     },
     [markInteracted, snapToRotation],
   );
@@ -324,6 +338,7 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       killSnap,
       snapToRotation,
       nudge,
+      jumpToIndex,
       confirmSelection,
     }),
     [
@@ -335,6 +350,7 @@ export function WheelProvider({ children }: { children: ReactNode }) {
       killSnap,
       snapToRotation,
       nudge,
+      jumpToIndex,
       confirmSelection,
     ],
   );

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ContactFormDialog } from '@/components/ui/ContactFormDialog';
 import { hudButtonClassName } from '@/components/ui/hudButton';
-import { CatalogIcon, FormIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
+import { CatalogIcon, FormIcon, MicIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
 import { PortfolioDialog } from '@/components/ui/PortfolioDialog';
 import { QrDialog } from '@/components/ui/QrDialog';
 import { WebsiteButton } from '@/components/ui/WebsiteButton';
@@ -13,14 +13,22 @@ import { useWheel } from '@/context/WheelContext';
 import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
 import { portfolioFor } from '@/data/companyPortfolio';
+import { useVoiceControl } from '@/hooks/useVoiceControl';
 import {
   HINT_FADE_DURATION,
   HUD_DIM_DURATION,
   HUD_DIM_OPACITY,
   HUD_RESTORE_DURATION,
 } from '@/lib/constants';
+import type { VoiceCommand } from '@/lib/voiceIntent';
 
 type OpenDialog = 'qr' | 'form' | 'portfolio' | 'catalog' | null;
+
+/** Which dialog a spoken "abrir portafolio/catálogo de <empresa>" should open once the
+ *  wheel finishes turning to that company — `null` while nothing is pending. */
+type PendingDialog = { readonly index: number; readonly dialog: 'portfolio' | 'catalog' } | null;
+
+const VOICE_TOAST_DURATION_MS = 2500;
 
 /**
  * Chrome over the wheel panel: the active company, the position counter and its
@@ -34,19 +42,114 @@ type OpenDialog = 'qr' | 'form' | 'portfolio' | 'catalog' | null;
  *   "Catálogo"           -> PDFs from the same folder, split into its own button so a
  *                           product catalogue does not get lost among flyer photos
  *
+ * Also listens continuously for voice commands (see `useVoiceControl/parseVoiceCommand`)
+ * so the same actions work by saying, e.g., "mostrar ssoma" or "abrir catálogo de
+ * yanayacu clean" — switching companies first if the one named is not the one on screen,
+ * then opening the dialog once the wheel actually gets there.
+ *
  * Re-renders only when `activeIndex`, `hasInteracted` or `isTransitioning` change —
  * never per frame. The wrapper is `pointer-events-none` so drags pass straight through
  * to the capture layer underneath; only the buttons opt back in.
  */
 export function CompanyHud() {
-  const { activeIndex, hasInteracted, isTransitioning } = useWheel();
+  const { activeIndex, hasInteracted, isTransitioning, jumpToIndex, nudge } = useWheel();
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
+  const [pendingDialog, setPendingDialog] = useState<PendingDialog>(null);
+  const [voiceToast, setVoiceToast] = useState<string | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const company = COMPANIES[activeIndex];
   const closeDialog = useCallback(() => setOpenDialog(null), []);
+
+  const showVoiceToast = useCallback((text: string) => {
+    setVoiceToast(text);
+    if (toastTimerRef.current !== null) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setVoiceToast(null), VOICE_TOAST_DURATION_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current !== null) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
+  // Once the wheel settles on the company a spoken "abrir portafolio/catálogo de X"
+  // asked for, open that dialog — reactive rather than timed, so it fires exactly when
+  // `activeIndex` actually gets there regardless of how long the snap animation takes.
+  useEffect(() => {
+    if (pendingDialog !== null && activeIndex === pendingDialog.index) {
+      setOpenDialog(pendingDialog.dialog);
+      setPendingDialog(null);
+    }
+  }, [activeIndex, pendingDialog]);
+
+  /**
+   * With a dialog already open, voice is deliberately deaf to everything except
+   * "cerrar" — someone reading a catalogue out loud to a visitor should not have a
+   * stray "quantuk" in their sentence jump the wheel out from under them.
+   */
+  const handleVoiceCommand = useCallback(
+    (command: VoiceCommand) => {
+      if (openDialog !== null) {
+        if (command.type === 'close') closeDialog();
+        return;
+      }
+      if (company === undefined) return;
+
+      switch (command.type) {
+        case 'select-company': {
+          const index = COMPANIES.findIndex((candidate) => candidate.slug === command.company.slug);
+          if (index !== -1) jumpToIndex(index);
+          showVoiceToast(command.company.name);
+          return;
+        }
+        case 'open-portfolio':
+        case 'open-catalog': {
+          const target = command.company ?? company;
+          const index = COMPANIES.findIndex((candidate) => candidate.slug === target.slug);
+          const dialog = command.type === 'open-portfolio' ? 'portfolio' : 'catalog';
+          if (index === activeIndex) {
+            setOpenDialog(dialog);
+          } else if (index !== -1) {
+            jumpToIndex(index);
+            setPendingDialog({ index, dialog });
+          }
+          showVoiceToast(target.name);
+          return;
+        }
+        case 'open-qr':
+          setOpenDialog('qr');
+          return;
+        case 'open-form':
+          setOpenDialog('form');
+          return;
+        case 'open-website':
+          // Best-effort: a browser can refuse a `window.open` that was not triggered by
+          // a direct tap, which a speech-recognition callback never is. When that
+          // happens the visitor still has "Ingresar a la web" to tap themselves.
+          window.open(company.url, '_blank', 'noopener,noreferrer');
+          return;
+        case 'next':
+          nudge(1);
+          return;
+        case 'previous':
+          nudge(-1);
+          return;
+        case 'close':
+          return;
+        case 'none':
+          return;
+      }
+    },
+    [openDialog, closeDialog, company, activeIndex, jumpToIndex, nudge, showVoiceToast],
+  );
+
+  // Paused (microphone fully released) only while the contact form's own recorder needs
+  // it — every other dialog just narrows voice down to "cerrar" above.
+  const voice = useVoiceControl(openDialog !== 'form', handleVoiceCommand);
 
   // The swipe hint retires permanently after the first interaction.
   useEffect(() => {
@@ -93,6 +196,33 @@ export function CompanyHud() {
   return (
     <>
       <div ref={rootRef} className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end">
+        {/* Quiet by design: a status pill, not a prompt asking for attention — this
+            experience is meant to work whether or not anyone notices it is listening. */}
+        {voice.supported && (
+          <div className="absolute right-3 top-3 sm:right-6 sm:top-6">
+            <div
+              className={[
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.65rem] font-medium backdrop-blur-sm transition-colors',
+                voice.permissionDenied
+                  ? 'bg-amber-100/90 text-amber-800'
+                  : voice.listening
+                    ? 'bg-neutral-900/80 text-white'
+                    : 'bg-neutral-900/40 text-white/70',
+              ].join(' ')}
+            >
+              <MicIcon className={`h-3.5 w-3.5 ${voice.listening ? 'animate-pulse' : ''}`} />
+              {voice.permissionDenied ? 'Permite el micrófono' : voice.listening ? 'Voz activa' : 'Voz'}
+            </div>
+          </div>
+        )}
+
+        {voiceToast !== null && (
+          <div aria-live="polite" className="absolute left-1/2 top-3 -translate-x-1/2 sm:top-6">
+            <div className="rounded-full bg-neutral-900/85 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm">
+              🎙 {voiceToast}
+            </div>
+          </div>
+        )}
 
         {/* On a very short screen (a phone on its side) the chrome tightens up so it
             never grows into the space the logo needs. */}
