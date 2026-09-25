@@ -109,26 +109,34 @@ export function useSpeechRecognizer(enabled: boolean, onFinalText: (text: string
       // that treating every error as fatal would mean it stops listening within seconds.
     };
 
+    /**
+     * `start()` can throw synchronously, not just fail asynchronously via `onend` — most
+     * commonly right when this session begins a beat after a *different* recognizer
+     * (voice navigation, say) called `stop()` on its own instance: the browser has not
+     * finished releasing the microphone yet. That first attempt below used to give up
+     * silently on catching it, with nothing left to trigger a retry — since a session
+     * that never started can never fire `onend` — so the recognizer stayed dead the
+     * whole time a caller like `<QuickRegisterBanner>` believed it was listening. Every
+     * attempt, first or retried, now goes through the same path and the same backoff.
+     */
+    const attemptStart = () => {
+      try {
+        recognition.start();
+        setState((previous) => ({ ...previous, listening: true }));
+      } catch {
+        setState((previous) => ({ ...previous, listening: false }));
+        if (stopped || !enabledRef.current) return;
+        restartTimer = setTimeout(attemptStart, RESTART_DELAY_MS);
+      }
+    };
+
     recognition.onend = () => {
       setState((previous) => ({ ...previous, listening: false }));
       if (stopped || !enabledRef.current) return;
-      restartTimer = setTimeout(() => {
-        try {
-          recognition.start();
-          setState((previous) => ({ ...previous, listening: true }));
-        } catch {
-          // start() throws if a session is somehow already active; the next onend
-          // (or the effect cleanup below) is what recovers from that state.
-        }
-      }, RESTART_DELAY_MS);
+      restartTimer = setTimeout(attemptStart, RESTART_DELAY_MS);
     };
 
-    try {
-      recognition.start();
-      setState((previous) => ({ ...previous, listening: true }));
-    } catch {
-      setState((previous) => ({ ...previous, listening: false }));
-    }
+    attemptStart();
 
     return () => {
       stopped = true;
