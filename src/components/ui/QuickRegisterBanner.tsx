@@ -51,6 +51,7 @@ type QuickRegisterBannerProps = {
  */
 export function QuickRegisterBanner({ interestCompany, onDone }: QuickRegisterBannerProps) {
   const [phase, setPhase] = useState<Phase>({ kind: 'listening', fields: EMPTY_FIELDS });
+  const [transcriptPreview, setTranscriptPreview] = useState('');
   const transcriptRef = useRef('');
   const checkingRef = useRef(false);
 
@@ -119,13 +120,17 @@ export function QuickRegisterBanner({ interestCompany, onDone }: QuickRegisterBa
   const handleFinalText = useCallback(
     (text: string) => {
       transcriptRef.current = `${transcriptRef.current} ${text}`.trim();
+      setTranscriptPreview(transcriptRef.current);
       void runCheck();
     },
     [runCheck],
   );
 
   const listening = phase.kind === 'listening' || phase.kind === 'checking';
-  useSpeechRecognizer(listening, handleFinalText);
+  // Surfaced in the UI below rather than discarded — the only way anyone can tell, from
+  // a live device with no console attached, whether the microphone session behind this
+  // banner is actually running or silently dead.
+  const mic = useSpeechRecognizer(listening, handleFinalText);
 
   // Auto-close a few seconds after success, and give up gracefully rather than listen
   // silently forever if nothing ever completes.
@@ -193,6 +198,23 @@ export function QuickRegisterBanner({ interestCompany, onDone }: QuickRegisterBa
                 </li>
               ))}
             </ul>
+            {/* Temporary while the feature is still being verified on real devices —
+                shows exactly what the microphone session is doing and what it has heard
+                so far, instead of a silent "Escuchando…" that looks identical whether it
+                is actually working or has quietly died. */}
+            <p className="text-[0.65rem] text-white/40">
+              mic:{' '}
+              {!mic.supported
+                ? 'no soportado'
+                : mic.permissionDenied
+                  ? 'permiso denegado'
+                  : mic.listening
+                    ? 'activo'
+                    : 'reconectando…'}
+            </p>
+            {transcriptPreview !== '' && (
+              <p className="line-clamp-2 text-[0.65rem] text-white/40">“{transcriptPreview}”</p>
+            )}
           </>
         )}
       </div>
