@@ -3,6 +3,7 @@
 import gsap from 'gsap';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { CatalogViewer, type CatalogViewerHandle } from '@/components/ui/CatalogViewer';
 import { ContactFormDialog } from '@/components/ui/ContactFormDialog';
 import { hudButtonClassName } from '@/components/ui/hudButton';
 import { CatalogIcon, FormIcon, MicIcon, PortfolioIcon, QrIcon } from '@/components/ui/icons';
@@ -38,8 +39,9 @@ const VOICE_TOAST_DURATION_MS = 2500;
  *   "Ingresar a la web"  -> company website in a new tab
  *   "QR de información"  -> QR code to the company's social links page
  *   "Formulario"         -> networking contact form
- *   "Portafolio"         -> images from public/portafolio/<slug>, only shown for a
- *                           company that actually has any
+ *   "Portafolio"         -> flyers and videos from public/portafolio/<slug>, opened on a
+ *                           picker between the two, only shown for a company that has at
+ *                           least one of them
  *   "Catálogo"           -> PDFs from the same folder, split into its own button so a
  *                           product catalogue does not get lost among flyer photos
  *   "registrar cliente"  -> (voice only) opens `<QuickRegisterBanner>`, which listens to
@@ -66,7 +68,7 @@ export function CompanyHud() {
   const hintRef = useRef<HTMLParagraphElement>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const portfolioViewerRef = useRef<PortfolioDialogHandle>(null);
-  const catalogViewerRef = useRef<PortfolioDialogHandle>(null);
+  const catalogViewerRef = useRef<CatalogViewerHandle>(null);
 
   const company = COMPANIES[activeIndex];
   const closeDialog = useCallback(() => setOpenDialog(null), []);
@@ -209,8 +211,10 @@ export function CompanyHud() {
 
   const color = companyColor(company.slug);
   const portfolioItems = portfolioFor(company.slug);
-  const images = portfolioItems.filter((item) => item.type === 'image');
+  const flyers = portfolioItems.filter((item) => item.type === 'image');
+  const videos = portfolioItems.filter((item) => item.type === 'video');
   const catalogItems = portfolioItems.filter((item) => item.type === 'pdf');
+  const hasPortfolio = flyers.length > 0 || videos.length > 0;
 
   return (
     <>
@@ -311,7 +315,7 @@ export function CompanyHud() {
               </button>
             </div>
 
-            {images.length > 0 && (
+            {hasPortfolio && (
               <div className="pointer-events-auto">
                 <button
                   type="button"
@@ -346,12 +350,14 @@ export function CompanyHud() {
       <ContactFormDialog company={company} open={openDialog === 'form'} onClose={closeDialog} />
       <PortfolioDialog
         ref={portfolioViewerRef}
-        title={`Portafolio de ${company.name}`}
-        items={images}
+        companyName={company.name}
+        flyers={flyers}
+        videos={videos}
+        color={color}
         open={openDialog === 'portfolio'}
         onClose={closeDialog}
       />
-      <PortfolioDialog
+      <CatalogViewer
         ref={catalogViewerRef}
         title={`Catálogo de ${company.name}`}
         items={catalogItems}

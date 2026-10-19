@@ -140,3 +140,50 @@ export function ExternalIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function ImageIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <circle cx="8.5" cy="10" r="1.5" />
+      <path d="M4 17l4.5-4.5L12 16l3-2.5 5 4.5" />
+    </BaseIcon>
+  );
+}
+
+/** Play glyph for a video: the triangle is filled, unlike every other icon here, so a
+ *  card still reads as "this plays" at thumbnail size. */
+export function PlayIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M8.5 5.5l10 6.5-10 6.5z" fill="currentColor" strokeWidth={1.4} />
+    </BaseIcon>
+  );
+}
+
+export function PauseIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="7" y="5" width="3.5" height="14" rx="1" fill="currentColor" strokeWidth={0} />
+      <rect x="13.5" y="5" width="3.5" height="14" rx="1" fill="currentColor" strokeWidth={0} />
+    </BaseIcon>
+  );
+}
+
+export function VolumeIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 9.5h3l4-3.5v12l-4-3.5H4z" />
+      <path d="M15 9.5a3.5 3.5 0 0 1 0 5M17.8 7a7 7 0 0 1 0 10" />
+    </BaseIcon>
+  );
+}
+
+export function VolumeOffIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 9.5h3l4-3.5v12l-4-3.5H4z" />
+      <path d="M15.5 10.5l4 4M19.5 10.5l-4 4" />
+    </BaseIcon>
+  );
+}
