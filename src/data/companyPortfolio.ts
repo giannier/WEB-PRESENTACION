@@ -2,12 +2,12 @@
  * GENERATED FILE — do not edit by hand.
  *
  * Written by `npm run portfolio:scan`, which runs automatically before `dev` and
- * `build`. To give a company a portfolio, drop images or PDFs into
+ * `build`. To give a company a portfolio, drop images, videos or PDFs into
  * `public/portafolio/<slug>/` — any file name, any count.
  */
 
 export type PortfolioItem = {
-  readonly type: 'image' | 'pdf';
+  readonly type: 'image' | 'pdf' | 'video';
   readonly src: string;
   readonly name: string;
 };
@@ -20,6 +20,7 @@ export const COMPANY_PORTFOLIO: Readonly<Record<string, readonly PortfolioItem[]
   aguayanayacu: [
     { type: 'image', src: '/portafolio/aguayanayacu/1.webp', name: '1' },
     { type: 'image', src: '/portafolio/aguayanayacu/2.webp', name: '2' },
+    { type: 'video', src: '/portafolio/aguayanayacu/video1.mp4', name: 'video1' },
   ],
   corporacionyanayacu: [
     { type: 'image', src: '/portafolio/corporacionyanayacu/1.webp', name: '1' },
@@ -34,6 +35,8 @@ export const COMPANY_PORTFOLIO: Readonly<Record<string, readonly PortfolioItem[]
     { type: 'image', src: '/portafolio/somosescuelacapacita/1.webp', name: '1' },
     { type: 'image', src: '/portafolio/somosescuelacapacita/2.webp', name: '2' },
     { type: 'image', src: '/portafolio/somosescuelacapacita/3.webp', name: '3' },
+    { type: 'video', src: '/portafolio/somosescuelacapacita/video1.mp4', name: 'video1' },
+    { type: 'video', src: '/portafolio/somosescuelacapacita/video2.mp4', name: 'video2' },
   ],
   somostributa: [
     { type: 'image', src: '/portafolio/somostributa/1.webp', name: '1' },
@@ -42,6 +45,7 @@ export const COMPANY_PORTFOLIO: Readonly<Record<string, readonly PortfolioItem[]
     { type: 'image', src: '/portafolio/ssomasafe/1.webp', name: '1' },
     { type: 'image', src: '/portafolio/ssomasafe/2.webp', name: '2' },
     { type: 'pdf', src: '/portafolio/ssomasafe/CAT%C3%81LOGO%20SSOMA.pdf', name: 'CATÁLOGO SSOMA' },
+    { type: 'video', src: '/portafolio/ssomasafe/video1.mp4', name: 'video1' },
   ],
   supplylogistic360: [
     { type: 'image', src: '/portafolio/supplylogistic360/1.webp', name: '1' },
