@@ -27,7 +27,7 @@ export const LOGO_ASPECT_RATIOS: Readonly<Record<string, number>> = {
   tuperfil360: 2.9245,
   yanayacuclean: 2.4335,
   ynsumedic: 1.1884,
-  zentek360: 2.8931,
+  zentek360: 3.0296,
 };
 
 /** Falls back to square when a company has no entry yet. */
