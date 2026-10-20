@@ -15,6 +15,7 @@ import { useWheel } from '@/context/WheelContext';
 import { COMPANIES, COMPANY_COUNT } from '@/data/companies';
 import { companyColor } from '@/data/companyColors';
 import { portfolioFor } from '@/data/companyPortfolio';
+import { rucFor } from '@/data/companyRuc';
 import { useVoiceControl } from '@/hooks/useVoiceControl';
 import {
   HINT_FADE_DURATION,
@@ -210,6 +211,7 @@ export function CompanyHud() {
   if (company === undefined) return null;
 
   const color = companyColor(company.slug);
+  const ruc = rucFor(company.slug);
   const portfolioItems = portfolioFor(company.slug);
   const flyers = portfolioItems.filter((item) => item.type === 'image');
   const videos = portfolioItems.filter((item) => item.type === 'video');
@@ -281,6 +283,12 @@ export function CompanyHud() {
               </span>
               <span className="h-[2px] w-10 rounded-full" style={{ backgroundColor: color }} />
             </div>
+
+            {/* Only shown for a company this table actually covers — the client's own
+                SUNAT lookup, not something scraped or guessed for the rest. */}
+            {ruc !== undefined && (
+              <p className="mt-1.5 text-[0.6rem] tracking-[0.15em] text-neutral-400">RUC {ruc}</p>
+            )}
           </div>
 
           <nav
