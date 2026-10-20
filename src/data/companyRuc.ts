@@ -4,8 +4,8 @@
  * Sourced from the client's own SUNAT lookup table, not scraped from each company's
  * site — unlike `companyProfiles.ts`, there is no public page to cross-check this
  * against. A company missing here simply shows no RUC in the HUD; six of the nineteen
- * (trustagroexport, tuperfil360, surelife360, abubu, somostributa, rekuperat, ynsumedic)
- * had no RUC in that table and are deliberately left out rather than guessed.
+ * (tuperfil360, surelife360, abubu, somostributa, rekuperat, ynsumedic) had no RUC in
+ * that table and are deliberately left out rather than guessed.
  */
 export const COMPANY_RUC: Readonly<Record<string, string>> = {
   corporacionyanayacu: '20608600991',
@@ -20,6 +20,7 @@ export const COMPANY_RUC: Readonly<Record<string, string>> = {
   parkeatcar: '20615720349',
   zentek360: '20616110099',
   arbicop: '20614105829',
+  trustagroexport: '20616573552',
 };
 
 export function rucFor(slug: string): string | undefined {

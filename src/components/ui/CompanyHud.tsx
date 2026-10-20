@@ -287,7 +287,9 @@ export function CompanyHud() {
             {/* Only shown for a company this table actually covers — the client's own
                 SUNAT lookup, not something scraped or guessed for the rest. */}
             {ruc !== undefined && (
-              <p className="mt-2 text-sm font-medium tracking-[0.1em] text-neutral-300">RUC {ruc}</p>
+              <p className="mt-2 text-sm font-semibold tracking-[0.1em]" style={{ color }}>
+                RUC {ruc}
+              </p>
             )}
           </div>
 
