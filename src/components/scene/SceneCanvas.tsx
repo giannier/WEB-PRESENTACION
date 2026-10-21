@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { SceneLoader } from '@/components/scene/Loader';
 import { CompanyShowcase } from '@/components/showcase/CompanyShowcase';
 import { CompanyHud } from '@/components/ui/CompanyHud';
+import { IsoBadge } from '@/components/ui/IsoBadge';
 import { CompanyWheel } from '@/components/wheel/CompanyWheel';
 import { fitLogoSize } from '@/components/wheel/logoGeometry';
 import { QualityProvider, useQuality } from '@/context/QualityContext';
@@ -182,6 +183,11 @@ function Experience() {
           >
             <Scene />
           </Canvas>
+
+          {/* Overlays the canvas box itself, so its percentage offsets are relative to
+              the space the camera actually frames the logo in. Sits under the capture
+              layer below, and is pointer-events-none anyway. */}
+          <IsoBadge />
         </div>
 
         {/*
