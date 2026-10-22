@@ -13,7 +13,7 @@
     "portfolio:scan": "node scripts/scan-portfolio.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "deploy:cpanel": "node scripts/build-cpanel.mjs",
+    "deploy:cpanel": "node scripts/build-cpanel.mjs && node scripts/zip-cpanel.mjs",
     "logos:optimize": "node scripts/optimize-logos.mjs",
     "colors:extract": "node scripts/extract-colors.mjs"
   },
@@ -33,6 +33,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "@types/three": "0.186.0",
+    "archiver": "^8.0.0",
     "sharp": "0.35.4",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3"

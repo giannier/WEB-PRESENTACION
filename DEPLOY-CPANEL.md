@@ -32,8 +32,17 @@ real CloudLinux/LiteSpeed account — not documented anywhere obvious beforehand
 npm run deploy:cpanel
 ```
 
-Output: `deploy/cpanel/`. It contains `app.cjs` (starts `server.js`), `.next/` and `public/` —
-everything the runtime needs **except dependencies**, installed separately in step 3.
+This runs two steps: `build-cpanel.mjs` assembles `deploy/cpanel/` (it contains `app.cjs`,
+which starts `server.js`, plus `.next/` and `public/` — everything the runtime needs **except
+dependencies**, installed separately in step 3), then `zip-cpanel.mjs` zips it into
+`deploy/cpanel-deploy.zip`, ready to upload.
+
+> **Do not zip `deploy/cpanel/` by hand with PowerShell's `Compress-Archive`.** It does not
+> write Unix file-mode bits into the zip's external file attributes for nested directories —
+> cPanel's Linux-side unzip then extracts some of them as unreadable: a blank "Permissions"
+> column and a "31 dic 1969, 19:00" (Unix epoch, i.e. a failed stat) timestamp in File Manager.
+> `zip-cpanel.mjs` sets explicit Unix mode bits (`0o755` dirs / `0o644` files) on every entry
+> instead, which is why it exists and why `deploy:cpanel` always runs it.
 
 ### 2. Create the application in cPanel
 
@@ -53,7 +62,7 @@ none of that is the real app yet.
 
 ### 3. Upload the artifact, then install dependencies on the host
 
-1. Zip `deploy/cpanel/` and upload it into `portafolio-app` (File Manager → Upload → Extract,
+1. Upload `deploy/cpanel-deploy.zip` into `portafolio-app` (File Manager → Upload → Extract,
    directly into the app root, not a nested `cpanel/` folder). The final layout:
 
    ```
@@ -124,7 +133,7 @@ own, written in step 2) from that directory. Passenger routes every request to t
 npm run deploy:cpanel
 ```
 
-Zip `deploy/cpanel/`, upload, extract over the app root (overwrite — it contains no
+Upload `deploy/cpanel-deploy.zip`, extract over the app root (overwrite — it contains no
 `node_modules`, so this never touches the symlinked one), **Restart**. Only run **Run NPM
 Install** again if `package.json`'s dependencies actually changed. Files under `.next/` are
 hashed per build, so stale chunks are harmless, but a restart is not optional: LiteSpeed keeps
@@ -141,6 +150,7 @@ serving the previous process until it is told to stop.
 | Unstyled page | `.next/static/` missing from the app root. |
 | Broken images, 404 on logos | `public/` missing from the app root. |
 | `EADDRNOTAVAIL` on boot | Startup file set to `server.js` directly instead of `app.cjs` — `server.js` reads `HOSTNAME` at module scope before anything can override it. |
+| `public/portafolio/<company>/` shows a blank Permissions column and "31 dic 1969" as the date in File Manager | The zip was built by hand with PowerShell's `Compress-Archive`, which does not preserve Unix permission bits on nested directories. Rebuild with `npm run deploy:cpanel` (which runs `zip-cpanel.mjs`), delete the broken folder, re-extract. |
 
 If the account cannot keep the process alive, the fallback is `output: 'export'` plus PHP
 proxies for the four `/api/*` routes — same HTML, no Node process. That is a real code fork
