@@ -49,3 +49,6 @@ yarn-error.log*
 /.atl
 /.claude
 .env*
+
+# cPanel deployable assembled by `npm run deploy:cpanel`
+/deploy

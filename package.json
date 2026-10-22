@@ -13,6 +13,7 @@
     "portfolio:scan": "node scripts/scan-portfolio.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "deploy:cpanel": "node scripts/build-cpanel.mjs",
     "logos:optimize": "node scripts/optimize-logos.mjs",
     "colors:extract": "node scripts/extract-colors.mjs"
   },
