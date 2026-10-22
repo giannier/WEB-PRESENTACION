@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import { CONTACT_TEXT_FIELDS, type ContactTextField } from '@/features/contacts/domain/contact';
+import { withCors } from '@/lib/cors';
+
+export { OPTIONS } from '@/lib/cors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,6 +34,10 @@ export type VoiceContactResult = {
  * server-side, behind one place that can cap request size and time out cleanly.
  */
 export async function POST(request: Request) {
+  return withCors(await handlePost(request), request);
+}
+
+async function handlePost(request: Request) {
   const webhookUrl = process.env.N8N_VOICE_WEBHOOK_URL?.trim();
   if (!webhookUrl) {
     console.error('[voice-contact] N8N_VOICE_WEBHOOK_URL is not configured.');

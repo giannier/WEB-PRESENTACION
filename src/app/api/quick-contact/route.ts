@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { CONTACT_TEXT_FIELDS, type Contact, type ContactTextField } from '@/features/contacts/domain/contact';
 import { resolveContactRepository } from '@/features/contacts/infrastructure/resolveContactRepository';
+import { withCors } from '@/lib/cors';
+
+export { OPTIONS } from '@/lib/cors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,6 +31,10 @@ type QuickContactInput = {
  * "Empresa" cell.
  */
 export async function POST(request: Request) {
+  return withCors(await handlePost(request), request);
+}
+
+async function handlePost(request: Request) {
   const body = await request.text();
   if (body.length > MAX_BODY_BYTES) {
     return NextResponse.json({ ok: false, message: 'La solicitud es demasiado grande.' }, { status: 413 });

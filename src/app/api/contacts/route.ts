@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { registerContact } from '@/features/contacts/application/registerContact';
 import { CONTACT_HONEYPOT_FIELD, type ContactInput } from '@/features/contacts/domain/contact';
 import { resolveContactRepository } from '@/features/contacts/infrastructure/resolveContactRepository';
+import { withCors } from '@/lib/cors';
+
+export { OPTIONS } from '@/lib/cors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +20,10 @@ const MAX_BODY_BYTES = 16_000;
  * is not a trust boundary.
  */
 export async function POST(request: Request) {
+  return withCors(await handlePost(request), request);
+}
+
+async function handlePost(request: Request) {
   const body = await request.text();
   if (body.length > MAX_BODY_BYTES) {
     return NextResponse.json({ ok: false, message: 'La solicitud es demasiado grande.' }, { status: 413 });

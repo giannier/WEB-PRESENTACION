@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+import { withCors } from '@/lib/cors';
+
+export { OPTIONS } from '@/lib/cors';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +34,10 @@ type WorkflowResponse = {
  * here: the workflow URL, and whatever OpenAI usage it triggers, stay off the client.
  */
 export async function POST(request: Request) {
+  return withCors(await handlePost(request), request);
+}
+
+async function handlePost(request: Request) {
   const webhookUrl = process.env.N8N_QUICK_REGISTER_WEBHOOK_URL?.trim();
   if (!webhookUrl) {
     console.error('[quick-register] N8N_QUICK_REGISTER_WEBHOOK_URL is not configured.');
